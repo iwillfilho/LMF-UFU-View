@@ -29,12 +29,26 @@ export function AutoCarousel({ rotulo, children }: { rotulo: string; children: R
   );
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: itens.length > 1, align: "start", dragFree: true }, plugins);
 
+  // Quando todos os itens cabem na tela o Embla tem 1 só posição e o plugin de
+  // autoplay não inicializa (chamar play() nesse estado quebra a página).
+  const [rola, setRola] = useState(false);
   useEffect(() => {
+    if (!emblaApi) return;
+    const atualizar = () => setRola(emblaApi.scrollSnapList().length > 1);
+    atualizar();
+    emblaApi.on("reInit", atualizar);
+    return () => {
+      emblaApi.off("reInit", atualizar);
+    };
+  }, [emblaApi]);
+
+  function alternarPausa() {
     const autoplay = emblaApi?.plugins().autoplay;
-    if (!autoplay) return;
-    if (pausado) autoplay.stop();
-    else autoplay.play();
-  }, [emblaApi, pausado]);
+    if (!autoplay || !rola) return;
+    if (pausado) autoplay.play();
+    else autoplay.stop();
+    setPausado(!pausado);
+  }
 
   return (
     <div role="region" aria-roledescription="carrossel" aria-label={rotulo}>
@@ -47,10 +61,10 @@ export function AutoCarousel({ rotulo, children }: { rotulo: string; children: R
           ))}
         </ul>
       </div>
-      {autoplayAtivo ? (
+      {autoplayAtivo && rola ? (
         <button
           type="button"
-          onClick={() => setPausado((p) => !p)}
+          onClick={alternarPausa}
           className="mt-4 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
         >
           {pausado ? <Play className="size-3.5" aria-hidden /> : <Pause className="size-3.5" aria-hidden />}
