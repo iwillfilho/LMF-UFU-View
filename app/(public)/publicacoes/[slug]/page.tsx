@@ -53,7 +53,7 @@ export default async function Page({ params }: PageProps<"/publicacoes/[slug]">)
         <div className="mt-8 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted-foreground">
           <span className="pill bg-secondary text-secondary-foreground">{CATEGORIA_LABEL[post.categoria]}</span>
           {data ? <time dateTime={data}>{formatarData(data)}</time> : null}
-          {post.local ? <span>· {post.local}</span> : null}
+          {post.local ? <span>{post.local}</span> : null}
         </div>
         <h1 className="text-title mt-5">{post.titulo}</h1>
         {post.resumo ? <p className="mt-6 text-xl leading-relaxed text-muted-foreground">{post.resumo}</p> : null}

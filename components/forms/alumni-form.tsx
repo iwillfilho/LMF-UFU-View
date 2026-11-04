@@ -119,7 +119,7 @@ export function AlumniForm() {
             <input
               type="checkbox"
               name="consentimento"
-              required
+              aria-required="true"
               aria-invalid={e.consentimento ? true : undefined}
               aria-describedby={e.consentimento ? "consentimento-erro" : undefined}
               className="mt-1 size-4 shrink-0 accent-primary"

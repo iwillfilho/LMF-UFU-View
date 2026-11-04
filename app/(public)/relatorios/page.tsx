@@ -44,7 +44,7 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/relatorios
       </aside>
 
       <section aria-labelledby="resultado-titulo" className="lg:order-1">
-        <h2 id="resultado-titulo" className="text-sm text-muted-foreground" aria-live="polite">
+        <h2 id="resultado-titulo" className="font-sans text-sm font-normal text-muted-foreground" aria-live="polite">
           {plural(lista.length, "relatório", "relatórios")}
           {autorNome ? ` de ${autorNome}` : null}
         </h2>

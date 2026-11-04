@@ -110,6 +110,7 @@ export function ReportFilters({
                 type="button"
                 role="combobox"
                 aria-expanded={aberto}
+                aria-controls="lista-pessoas"
                 aria-labelledby="pessoa-rotulo"
                 className="flex h-11 min-w-0 flex-1 items-center justify-between gap-2 rounded-[0.9rem_0.9rem_0.3rem_0.9rem] border border-input bg-background px-3.5 text-left text-[0.9375rem] dark:bg-input/20"
               >
@@ -138,7 +139,7 @@ export function ReportFilters({
               </div>
               <Command>
                 <CommandInput placeholder="Buscar por nome…" />
-                <CommandList>
+                <CommandList id="lista-pessoas">
                   <CommandEmpty>Ninguém com esse nome.</CommandEmpty>
                   <CommandGroup>
                     {visiveis.map((p) => (

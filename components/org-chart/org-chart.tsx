@@ -92,12 +92,12 @@ export function OrgChart({ diretorias, liderancas, hrefMembro }: Props) {
         {demais.length > 0 ? (
           <>
             <Linha />
-            {/* Celular: lista com linha à esquerda. Desktop: uma linha horizontal ligando as diretorias. */}
+            {/* Celular: lista empilhada. Desktop: uma linha horizontal ligando as diretorias. */}
             <ul
               style={{ "--n": demais.length } as CSSProperties}
               className={cn(
-                "relative grid gap-3 border-l border-border pl-5",
-                "lg:grid-cols-[repeat(var(--n),minmax(0,1fr))] lg:gap-4 lg:border-l-0 lg:pt-6 lg:pl-0",
+                "relative mx-auto grid max-w-xs gap-3 lg:max-w-none",
+                "lg:grid-cols-[repeat(var(--n),minmax(0,1fr))] lg:gap-4 lg:pt-6",
                 "lg:before:absolute lg:before:top-0 lg:before:h-px lg:before:bg-border",
                 "lg:before:right-[calc(100%/(var(--n)*2))] lg:before:left-[calc(100%/(var(--n)*2))]",
               )}
