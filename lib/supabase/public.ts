@@ -19,5 +19,9 @@ export function createPublicClient() {
   }
   return createClient<Database>(url, key, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    // O cache é só o 'use cache' das funções em lib/queries.ts. Sem isto o Next
+    // também guarda a resposta no fetch cache, que sobrevive entre builds e
+    // fazia o build seguinte mostrar dados antigos.
+    global: { fetch: (input, init) => fetch(input, { ...init, cache: "no-store" }) },
   });
 }
