@@ -67,7 +67,7 @@ insert into public.partners (nome, url, institucional, ordem) values
 -- ser enviado pela Área Restrita (o site antigo apontava todos para o INTB3).
 insert into public.reports (slug, titulo, resumo, tipo, nucleo_id, setor, ticker, pdf_path, publicado, publicado_em)
 select r.slug, r.titulo, r.resumo, r.tipo::public.report_tipo, n.id, r.setor, r.ticker, r.pdf_path, r.publicado,
-       case when r.publicado then '2025-06-01'::timestamptz end
+       case when r.publicado then '2025-06-01 12:00-03'::timestamptz end
 from (values
   ('intb3', 'INTB3', 'Valuation e análise do domínio de mercado da Intelbras em segurança eletrônica.',
    'iniciacao', 'equity', 'Tech', 'INTB3', 'intelbras-relatorio-valuation.pdf', true),
