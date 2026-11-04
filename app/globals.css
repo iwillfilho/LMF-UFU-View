@@ -1,0 +1,260 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* O tema é controlado pela classe .dark no <html> (next-themes). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ==========================================================
+   PALETA DA MARCA (docs-marca/paleta-cores.jpeg)
+   Valores fixos, iguais nos dois temas.
+========================================================== */
+@theme {
+  --color-violeta: #8c14b9; /* Cor primária */
+  --color-plum: #3f0953; /* Cor escura primária */
+  --color-lilac: #c455ed; /* Cor clara primária */
+  --color-galaxy: #09000f; /* Cor escura secundária */
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-instrument-serif), ui-serif, Georgia, serif;
+  --font-heading: var(--font-serif);
+
+  /* Escala tipográfica (razão ~1.333, ajustada para a serifa display) */
+  --text-display: clamp(3.25rem, 1.4rem + 6vw, 7rem);
+  --text-display--line-height: 0.92;
+  --text-title: clamp(2.5rem, 1.6rem + 3.6vw, 4.75rem);
+  --text-title--line-height: 1;
+  --text-quote: clamp(2rem, 1.3rem + 2.6vw, 3.5rem);
+  --text-quote--line-height: 1.08;
+}
+
+/* ==========================================================
+   TOKENS SEMÂNTICOS (shadcn) — tema claro
+========================================================== */
+:root {
+  --background: #fbf8fc;
+  --foreground: #1a0a24;
+  --card: #ffffff;
+  --card-foreground: #1a0a24;
+  --popover: #ffffff;
+  --popover-foreground: #1a0a24;
+  --primary: #8c14b9;
+  --primary-foreground: #ffffff;
+  --secondary: #f1e7f6;
+  --secondary-foreground: #3f0953;
+  --muted: #f1e7f6;
+  --muted-foreground: #5e4e69;
+  --accent: #f1e7f6;
+  --accent-foreground: #3f0953;
+  /* Acento usado em TEXTO (links, itálicos de destaque). */
+  --ink-accent: #7a10a3;
+  --destructive: #c0262d;
+  --border: #e4d6eb;
+  --input: #e4d6eb;
+  --ring: #8c14b9;
+  --radius: 0.75rem;
+
+  /* Brilho radial da marca (gradiente "Galaxy") */
+  --glow-core: rgb(196 85 237 / 0.35);
+  --glow-edge: rgb(140 20 185 / 0.12);
+
+  --chart-1: #8c14b9;
+  --chart-2: #c455ed;
+  --chart-3: #3f0953;
+  --chart-4: #b48bc8;
+  --chart-5: #5e4e69;
+  --sidebar: #f6eff9;
+  --sidebar-foreground: #1a0a24;
+  --sidebar-primary: #8c14b9;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #ecdff2;
+  --sidebar-accent-foreground: #3f0953;
+  --sidebar-border: #e4d6eb;
+  --sidebar-ring: #8c14b9;
+}
+
+/* ==========================================================
+   TEMA ESCURO (padrão do site)
+   Base Galaxy; o violeta é usado em preenchimentos e o lilás
+   em texto, porque violeta sobre Galaxy não tem contraste suficiente.
+========================================================== */
+.dark {
+  --background: #09000f;
+  --foreground: #f3ecf7;
+  --card: #13051c;
+  --card-foreground: #f3ecf7;
+  --popover: #13051c;
+  --popover-foreground: #f3ecf7;
+  --primary: #8c14b9;
+  --primary-foreground: #ffffff;
+  --secondary: #1d0829;
+  --secondary-foreground: #f3ecf7;
+  --muted: #1d0829;
+  --muted-foreground: #ab9cb7;
+  --accent: #1d0829;
+  --accent-foreground: #f3ecf7;
+  --ink-accent: #c455ed;
+  --destructive: #f0646b;
+  --border: rgb(196 85 237 / 0.16);
+  --input: rgb(196 85 237 / 0.22);
+  --ring: #c455ed;
+
+  --glow-core: rgb(140 20 185 / 0.55);
+  --glow-edge: rgb(63 9 83 / 0.35);
+
+  --sidebar: #0f0317;
+  --sidebar-foreground: #f3ecf7;
+  --sidebar-primary: #8c14b9;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1d0829;
+  --sidebar-accent-foreground: #f3ecf7;
+  --sidebar-border: rgb(196 85 237 / 0.16);
+  --sidebar-ring: #c455ed;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-ink-accent: var(--ink-accent);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    scroll-padding-top: 6rem; /* compensa a navbar fixa em links com âncora */
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-weight: 300;
+    font-feature-settings: "cv11", "ss01";
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+  ::selection {
+    background: var(--color-lilac);
+    color: var(--color-galaxy);
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 3px;
+  }
+}
+
+/* ==========================================================
+   ELEMENTOS DA MARCA
+========================================================== */
+@layer components {
+  /* Pílula assimétrica (etiquetas "Cores"/"Fontes" do guia da marca):
+     lado esquerdo e topo-direito arredondados, base-direita reta. */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border-radius: 999px 999px 0.35rem 999px;
+    padding: 0.3rem 0.95rem 0.3rem 0.85rem;
+    font-size: 0.8125rem;
+    font-weight: 400;
+    line-height: 1.2;
+  }
+
+  /* Logo como máscara: herda a cor do texto (funciona nos dois temas). */
+  .brand-mask {
+    display: block;
+    background-color: currentColor;
+    mask-repeat: no-repeat;
+    mask-position: left center;
+    mask-size: contain;
+  }
+
+  /* Brilho radial da marca: a única "decoração" forte do site. */
+  .galaxy-glow {
+    background:
+      radial-gradient(
+        60% 70% at 72% 38%,
+        var(--glow-core) 0%,
+        var(--glow-edge) 45%,
+        transparent 75%
+      );
+  }
+}
+
+/* Entrada orquestrada do hero (único movimento automático do site). */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.35em);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes glow-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.animate-rise {
+  animation: rise 0.9s cubic-bezier(0.2, 0.7, 0.1, 1) both;
+}
+.animate-glow-in {
+  animation: glow-in 1.8s cubic-bezier(0.2, 0.7, 0.1, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-rise,
+  .animate-glow-in {
+    animation: none;
+  }
+}
