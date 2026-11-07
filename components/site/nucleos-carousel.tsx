@@ -100,19 +100,25 @@ export function NucleosCarousel({ nucleos }: { nucleos: Nucleo[] }) {
         >
           <ArrowRight className="size-4" aria-hidden />
         </button>
-        <div className="ml-2 flex gap-2">
+        <div className="ml-2 flex">
           {nucleos.map((n, i) => (
+            // Botão de 24px de altura (WCAG 2.5.8); a pílula visual é o span interno.
             <button
               key={n.slug}
               type="button"
               onClick={() => emblaApi?.scrollTo(i)}
               aria-label={`Ir para ${n.nome}`}
               aria-current={selected === i ? "true" : undefined}
-              className={cn(
-                "h-1.5 rounded-full transition-all",
-                selected === i ? "w-8 bg-primary" : "w-3 bg-border hover:bg-muted-foreground",
-              )}
-            />
+              className="group relative flex h-6 min-w-6 items-center justify-center px-1"
+            >
+              <span
+                aria-hidden
+                className={cn(
+                  "h-1.5 rounded-full transition-all",
+                  selected === i ? "w-8 bg-primary" : "w-3 bg-border group-hover:bg-muted-foreground",
+                )}
+              />
+            </button>
           ))}
         </div>
       </div>

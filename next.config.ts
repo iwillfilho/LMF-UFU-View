@@ -28,6 +28,19 @@ const nextConfig: NextConfig = {
     // Só no Supabase local (127.0.0.1); em produção o host é público.
     dangerouslyAllowLocalIP: supabaseLocal,
   },
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+        ],
+      },
+    ];
+  },
   experimental: {
     // Foto do cadastro de alumni: até 5 MB + folga do multipart.
     serverActions: { bodySizeLimit: "6mb" },

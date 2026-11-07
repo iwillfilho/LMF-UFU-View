@@ -17,22 +17,27 @@ function isActive(pathname: string, href: string) {
 }
 
 /** Só aparece quando o Presidente ou o Diretor de RH abre o PS (site_settings.ps_aberto). */
-function PsButton({ visivel, className }: { visivel: boolean; className?: string }) {
+function PsButton({ visivel, url, className }: { visivel: boolean; url: string; className?: string }) {
   if (!visivel) return null;
+  // Link externo (formulário do PS ou Linktree). Quando existir a página interna
+  // /processo-seletivo (Fase 5), trocar por <Link href="/processo-seletivo">.
   return (
-    <Link
-      href="/processo-seletivo"
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
       className={cn(
         "pill bg-primary text-primary-foreground transition-colors hover:bg-plum dark:hover:bg-lilac dark:hover:text-galaxy",
         className,
       )}
     >
       Processo Seletivo
-    </Link>
+      <span className="sr-only"> (abre em nova aba)</span>
+    </a>
   );
 }
 
-export function SiteHeader({ psAberto }: { psAberto: boolean }) {
+export function SiteHeader({ psAberto, psUrl }: { psAberto: boolean; psUrl: string }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -68,7 +73,7 @@ export function SiteHeader({ psAberto }: { psAberto: boolean }) {
         </nav>
 
         <div className="ml-auto flex items-center gap-2 xl:ml-2">
-          <PsButton visivel={psAberto} className="hidden sm:inline-flex" />
+          <PsButton visivel={psAberto} url={psUrl} className="hidden sm:inline-flex" />
           <ThemeToggle />
 
           <Sheet open={open} onOpenChange={setOpen}>
@@ -102,7 +107,7 @@ export function SiteHeader({ psAberto }: { psAberto: boolean }) {
                     );
                   })}
                 </ul>
-                <PsButton visivel={psAberto} className="mt-8 self-start" />
+                <PsButton visivel={psAberto} url={psUrl} className="mt-8 self-start" />
               </nav>
             </SheetContent>
           </Sheet>

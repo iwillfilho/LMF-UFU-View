@@ -11,7 +11,8 @@ const DESCRICOES: Record<SubpaginaEventos, string> = {
 };
 
 function subpagina(categoria: string): SubpaginaEventos | null {
-  return categoria in SUBPAGINAS_EVENTOS ? (categoria as SubpaginaEventos) : null;
+  // hasOwn ignora o protótipo: "constructor" e "__proto__" têm de dar 404.
+  return Object.hasOwn(SUBPAGINAS_EVENTOS, categoria) ? (categoria as SubpaginaEventos) : null;
 }
 
 export function generateStaticParams() {
