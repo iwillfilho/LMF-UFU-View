@@ -12,12 +12,24 @@ export function temPapel(papeis: readonly Papel[], permitidos: readonly Papel[])
   return papeis.some((p) => permitidos.includes(p));
 }
 
+/** Todos os papéis, do mais ao menos amplo (ordem de exibição). */
+export const PAPEIS = ["presidente", "diretor_rh", "rh", "editor", "membro"] as const satisfies readonly Papel[];
+
 export const ROTULO_PAPEL: Record<Papel, string> = {
   presidente: "Presidente",
   diretor_rh: "Diretor de RH",
   rh: "RH",
   editor: "Editor",
   membro: "Membro",
+};
+
+/** O que cada papel libera, para quem concede o acesso saber o que está dando. */
+export const DESCRICAO_PAPEL: Record<Papel, string> = {
+  presidente: "Administra tudo: acessos, membros, documentos, publicações e RH.",
+  diretor_rh: "Administra tudo: acessos, membros, documentos, publicações e RH.",
+  rh: "Lança pontos e strikes dos membros.",
+  editor: "Publica posts e relatórios no site.",
+  membro: "Vê o calendário, os documentos e os próprios pontos.",
 };
 
 export type Aba = { href: string; label: string; papeis: readonly Papel[] };
@@ -30,4 +42,5 @@ export const ABAS: Aba[] = [
   { href: "/area-restrita/documentos", label: "Documentos", papeis: TODOS },
   { href: "/area-restrita/meus-pontos", label: "Meus pontos", papeis: TODOS },
   { href: "/area-restrita/rh", label: "RH", papeis: RH },
+  { href: "/area-restrita/acessos", label: "Acessos", papeis: ADMIN },
 ];

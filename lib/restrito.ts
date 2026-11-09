@@ -1,7 +1,7 @@
 import "server-only";
 
 import { exigirPapel } from "@/lib/auth";
-import { PUBLICA, RH, TODOS } from "@/lib/papeis";
+import { ADMIN, PAPEIS, type Papel, PUBLICA, RH, TODOS } from "@/lib/papeis";
 import type { Enums } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/server";
 
@@ -334,4 +334,47 @@ export async function getMembrosRH(): Promise<MembroRH[]> {
   const { data, error } = await supabase.from("members").select("id, nome, status").order("nome");
   if (error) falha("members", error);
   return data.map((m) => ({ id: m.id, nome: m.nome, alumni: m.status === "alumni" }));
+}
+
+// =============================================================================
+// Acessos (só Presidente e Diretor de RH)
+// =============================================================================
+export type PessoaComAcesso = {
+  email: string;
+  /** Cadastro de membro ligado a este e-mail (o mesmo em todos os papéis). */
+  membroId: string | null;
+  membro: string | null;
+  papeis: { grantId: string; papel: Papel }[];
+  /** Já entrou ao menos uma vez com o Google (a conta existe e recebeu os papéis). */
+  entrou: boolean;
+};
+
+/** access_grants agrupado por e-mail, com os papéis na ordem de PAPEIS. */
+export async function getAcessos(): Promise<PessoaComAcesso[]> {
+  await exigirPapel(ADMIN);
+  const supabase = await createClient();
+  const [grants, roles] = await Promise.all([
+    supabase.from("access_grants").select("id, email, role, member_id, members(nome)"),
+    supabase.from("user_roles").select("grant_id"),
+  ]);
+  if (grants.error) falha("access_grants", grants.error);
+  if (roles.error) falha("user_roles", roles.error);
+
+  const usados = new Set(roles.data.map((r) => r.grant_id));
+  const pessoas = new Map<string, PessoaComAcesso>();
+  for (const g of grants.data) {
+    const p = pessoas.get(g.email) ?? { email: g.email, membroId: null, membro: null, papeis: [], entrou: false };
+    p.papeis.push({ grantId: g.id, papel: g.role });
+    if (g.member_id && !p.membroId) {
+      p.membroId = g.member_id;
+      p.membro = g.members?.nome ?? null;
+    }
+    if (usados.has(g.id)) p.entrou = true;
+    pessoas.set(g.email, p);
+  }
+
+  const ordem = (papel: Papel) => PAPEIS.indexOf(papel);
+  return [...pessoas.values()]
+    .map((p) => ({ ...p, papeis: p.papeis.sort((a, b) => ordem(a.papel) - ordem(b.papel)) }))
+    .sort((a, b) => (a.membro ?? a.email).localeCompare(b.membro ?? b.email, "pt-BR"));
 }
