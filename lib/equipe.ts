@@ -2,7 +2,8 @@ import type { Membro } from "@/lib/queries";
 
 /** Cargos que aparecem no organograma (Presidente, Vice-presidente, Diretor(a)...). */
 export function ehLideranca(cargo: string) {
-  return /^(presidente|vice|diretor)/i.test(cargo);
+  // \b: "Diretor"/"Diretora" contam, "Diretoria" (o nome da área) não.
+  return /^(presidente|vice|diretora?)\b/i.test(cargo);
 }
 
 /** Membros ativos com cargo na gestão atual. */

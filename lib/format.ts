@@ -5,7 +5,10 @@ const dataCurta = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "sho
 
 export function formatarData(iso: string | null | undefined, estilo: "longa" | "curta" = "longa") {
   if (!iso) return null;
-  return (estilo === "longa" ? dataLonga : dataCurta).format(new Date(iso));
+  const data = new Date(iso);
+  // Data inválida: Intl lançaria RangeError e derrubaria a página inteira.
+  if (Number.isNaN(data.getTime())) return null;
+  return (estilo === "longa" ? dataLonga : dataCurta).format(data);
 }
 
 /** Ordena gestões no formato 2026.2. */

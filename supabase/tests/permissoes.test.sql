@@ -12,7 +12,7 @@
 -- =============================================================================
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(65);
+select plan(66);
 
 -- Liberação antes de a conta existir (caminho normal).
 insert into public.access_grants (email, role) values ('rh@teste.local', 'rh');
@@ -65,6 +65,11 @@ select is(
   private.before_user_created('{"user":{"email":"Presidente@LMF.com"}}'::jsonb),
   '{}'::jsonb,
   'hook aceita e-mail liberado, sem diferenciar maiúsculas'
+);
+select is(
+  private.before_user_created('{"user":{"email":"  presidente@lmf.com  "}}'::jsonb),
+  '{}'::jsonb,
+  'hook ignora espaços em volta do e-mail'
 );
 
 -- -----------------------------------------------------------------------------

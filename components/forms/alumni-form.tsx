@@ -1,17 +1,21 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 
 import { AvisoFormulario, Field, Honeypot, ariaCampo, inputClasse } from "@/components/forms/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { enviarCadastroAlumni } from "@/lib/actions/alumni";
+import { IMAGEM_MAX } from "@/lib/arquivos";
 import { ESTADO_INICIAL } from "@/lib/actions/form-state";
 import { cn } from "@/lib/utils";
 
 export function AlumniForm() {
   const [estado, enviar, enviando] = useActionState(enviarCadastroAlumni, ESTADO_INICIAL);
   const formRef = useRef<HTMLFormElement>(null);
+  // Acima de 6 MB o servidor corta a conexão antes da Server Action responder,
+  // então a foto grande é recusada aqui, antes de sair do navegador.
+  const [fotoGrande, setFotoGrande] = useState(false);
   const e = estado.erros ?? {};
   const v = estado.valores ?? {};
 
@@ -32,6 +36,7 @@ export function AlumniForm() {
 
   const dicaGestao = "Formato ano.semestre, por exemplo 2023.1.";
   const dicaFoto = "JPG, PNG ou WebP, até 5 MB. De preferência quadrada, com o rosto visível.";
+  const erroFoto = fotoGrande ? "A foto pode ter no máximo 5 MB. Escolha outra imagem." : e.foto;
 
   return (
     <div>
@@ -96,9 +101,22 @@ export function AlumniForm() {
             className={cn(inputClasse, "h-auto py-3")}
           />
         </Field>
-        <Field id="foto" label="Foto" opcional erro={e.foto} dica={dicaFoto} className="sm:col-span-2">
+        <Field
+          id="foto"
+          label="Foto"
+          opcional
+          erro={erroFoto}
+          dica={dicaFoto}
+          className="sm:col-span-2"
+        >
           <Input
-            {...ariaCampo("foto", e.foto, dicaFoto)}
+            {...ariaCampo("foto", erroFoto, dicaFoto)}
+            onChange={(ev) => {
+              const arquivo = ev.currentTarget.files?.[0];
+              const grande = Boolean(arquivo && arquivo.size > IMAGEM_MAX);
+              if (grande) ev.currentTarget.value = "";
+              setFotoGrande(grande);
+            }}
             type="file"
             accept="image/jpeg,image/png,image/webp"
             className={cn(inputClasse, "py-2.5 file:mr-3 file:rounded-full file:bg-secondary file:px-3")}

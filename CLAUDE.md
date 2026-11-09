@@ -96,7 +96,7 @@ There are no tests inside this repo besides the pgTAP ones. A separate QA suite 
   - `members` is public; contact info and the login link live in `member_private`.
   - `site_settings` is public; `restricted_settings` (Drive URL) is members-only.
 - `seed.sql` is local-only. The repo is public, so never put real e-mails or the Drive URL in it. The seed's admin e-mails are placeholders: `presidente@lmf.com`, `diretor.rh@lmf.com`.
-- Any permission change must come with a test in `supabase/tests/permissoes.test.sql`. Keep `select plan(N)` equal to the number of assertions (65 now).
+- Any permission change must come with a test in `supabase/tests/permissoes.test.sql`. Keep `select plan(N)` equal to the number of assertions (66 now).
 - `calendars` (Google Calendar IDs shown in the Calendário tab) is members-read and admin-write. The seed has one public example (Brazilian holidays); production starts empty.
 
 ## Next.js 16 specifics (read node_modules/next/dist/docs before using unfamiliar APIs)
