@@ -104,8 +104,11 @@ export default async function Page({ searchParams }: PageProps<"/area-restrita/m
         </Link>
       </div>
 
-      {/* Formulário GET: funciona sem JavaScript e deixa os filtros na URL. */}
+      {/* Formulário GET: funciona sem JavaScript e deixa os filtros na URL.
+          Os campos não são controlados, então não acompanham a URL numa
+          navegação sem recarregar ("Limpar", Voltar); a key remonta o form. */}
       <form
+        key={[busca, situacao, gestao, diretoria, nucleo].join("|")}
         action="/area-restrita/membros"
         className="mt-10 grid gap-3 rounded-xl border border-border p-4 sm:grid-cols-2 lg:grid-cols-3"
       >
