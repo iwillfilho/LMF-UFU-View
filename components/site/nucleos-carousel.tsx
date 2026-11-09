@@ -58,7 +58,7 @@ export function NucleosCarousel({ nucleos }: { nucleos: Nucleo[] }) {
       <div className="overflow-hidden" ref={emblaRef}>
         <div className="flex">
           {nucleos.map((n, i) => (
-            <article
+            <div
               key={n.slug}
               role="group"
               aria-roledescription="slide"
@@ -78,7 +78,7 @@ export function NucleosCarousel({ nucleos }: { nucleos: Nucleo[] }) {
                   Conhecer o núcleo {n.nome}
                 </Link>
               </div>
-            </article>
+            </div>
           ))}
         </div>
       </div>
