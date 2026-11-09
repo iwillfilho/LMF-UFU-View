@@ -17,7 +17,7 @@ import {
   salvarMembro,
 } from "@/lib/actions/membros";
 import { plural } from "@/lib/format";
-import { fotoQuadrada } from "@/lib/foto-quadrada";
+import { fotoQuadrada } from "@/lib/imagem-navegador";
 import { DESCRICAO_PAPEL, PAPEIS, ROTULO_PAPEL } from "@/lib/papeis";
 import type { MembroAdmin, Opcao } from "@/lib/restrito";
 import { FOTO_PADRAO, publicUrl } from "@/lib/storage";

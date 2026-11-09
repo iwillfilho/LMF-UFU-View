@@ -21,7 +21,7 @@ export default async function Page() {
         <AgendaLmf agendas={agendas} />
       ) : (
         <p className="mt-10 max-w-[62ch] rounded-[1.25rem_1.25rem_0.35rem_1.25rem] border border-dashed border-border p-6 text-muted-foreground">
-          Nenhuma agenda cadastrada ainda. O Presidente ou o Diretor de RH adiciona as agendas da LMF na aba RH.
+          Nenhuma agenda cadastrada ainda. O Presidente ou o Diretor de RH adiciona as agendas da LMF em Conteúdo → Calendários.
         </p>
       )}
     </div>

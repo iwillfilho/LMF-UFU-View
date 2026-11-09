@@ -85,7 +85,7 @@ export async function getNucleos(): Promise<Nucleo[]> {
 
   const { data, error } = await createPublicClient()
     .from("nucleos")
-    .select("id, slug, nome, area, descricao, banner_path, nucleo_partners(ordem, partners(id, nome, url, logo_path))")
+    .select("id, slug, nome, area, descricao, banner_path, nucleo_partners(partners(id, nome, url, logo_path, ordem))")
     .order("ordem");
   if (error) falha("nucleos", error);
 
@@ -96,9 +96,11 @@ export async function getNucleos(): Promise<Nucleo[]> {
     area: n.area,
     descricao: n.descricao,
     bannerUrl: publicUrl("site", n.banner_path) ?? BANNER_PADRAO,
-    parceiros: [...n.nucleo_partners]
+    // A ordem dos parceiros é a da lista geral (Área Restrita → Conteúdo → Parceiros).
+    parceiros: n.nucleo_partners
+      .flatMap(({ partners: p }) => (p ? [p] : []))
       .sort((a, b) => a.ordem - b.ordem)
-      .flatMap(({ partners: p }) => (p ? [{ id: p.id, nome: p.nome, url: p.url, logoUrl: publicUrl("site", p.logo_path) }] : [])),
+      .map((p) => ({ id: p.id, nome: p.nome, url: p.url, logoUrl: publicUrl("site", p.logo_path) })),
   }));
 }
 

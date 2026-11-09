@@ -44,4 +44,5 @@ export const ABAS: Aba[] = [
   { href: "/area-restrita/rh", label: "RH", papeis: RH },
   { href: "/area-restrita/membros", label: "Membros", papeis: ADMIN },
   { href: "/area-restrita/acessos", label: "Acessos", papeis: ADMIN },
+  { href: "/area-restrita/conteudo", label: "Conteúdo", papeis: ADMIN },
 ];

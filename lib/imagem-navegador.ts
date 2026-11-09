@@ -1,7 +1,8 @@
 /**
- * Prepara a foto de membro no navegador: recorte quadrado e compressão, antes
- * de enviar. Assim o upload fica pequeno (dezenas de KB) e todas as fotos do
- * site têm o mesmo formato. O servidor confere o conteúdo de novo.
+ * Prepara imagens no navegador antes de enviar: a foto de membro vira um
+ * quadrado; banners, logos e fotos da história só são reduzidos. Tudo sai em
+ * WebP (com transparência), então o upload fica pequeno. O servidor confere o
+ * conteúdo de novo.
  */
 
 const LADO = 640;
@@ -35,7 +36,26 @@ export async function fotoQuadrada(arquivo: File): Promise<Blob> {
   ctx.drawImage(imagem, x, y, lado, lado, 0, 0, destino, destino);
   imagem.close();
 
-  // Navegador sem encoder WebP (Safari antigo) devolve PNG, que o servidor também aceita.
+  return paraWebp(canvas);
+}
+
+/** Reduz para caber em maxLado × maxLado, sem cortar nem ampliar. */
+export async function imagemReduzida(arquivo: File, maxLado: number): Promise<Blob> {
+  const imagem = await createImageBitmap(arquivo, { imageOrientation: "from-image" });
+  const escala = Math.min(1, maxLado / Math.max(imagem.width, imagem.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(imagem.width * escala);
+  canvas.height = Math.round(imagem.height * escala);
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas indisponível");
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(imagem, 0, 0, canvas.width, canvas.height);
+  imagem.close();
+  return paraWebp(canvas);
+}
+
+// Navegador sem encoder WebP (Safari antigo) devolve PNG, que o servidor também aceita.
+async function paraWebp(canvas: HTMLCanvasElement): Promise<Blob> {
   const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", QUALIDADE));
   if (!blob) throw new Error("Não foi possível processar a imagem");
   return blob;

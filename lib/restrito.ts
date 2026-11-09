@@ -599,3 +599,137 @@ export async function getGestaoAtual(): Promise<string> {
   const calendario = gestaoDe(new Date());
   return [calendario, ...data.map((t) => t.gestao)].sort(compararGestao).at(-1) ?? calendario;
 }
+
+// =============================================================================
+// Conteúdo fixo (só Presidente e Diretor de RH)
+// =============================================================================
+export type NucleoAdmin = {
+  id: string;
+  slug: string;
+  nome: string;
+  area: string;
+  descricao: string;
+  bannerPath: string | null;
+  parceiros: string[];
+  relatorios: number;
+  cargos: number;
+};
+
+export async function getNucleosAdmin(): Promise<NucleoAdmin[]> {
+  await exigirPapel(ADMIN);
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("nucleos")
+    .select("id, slug, nome, area, descricao, banner_path, nucleo_partners(partner_id, ordem), reports(count), member_terms(count)")
+    .order("ordem")
+    .order("nome");
+  if (error) falha("nucleos", error);
+  return data.map((n) => ({
+    id: n.id,
+    slug: n.slug,
+    nome: n.nome,
+    area: n.area ?? "",
+    descricao: n.descricao ?? "",
+    bannerPath: n.banner_path,
+    parceiros: [...n.nucleo_partners].sort((a, b) => a.ordem - b.ordem).map((p) => p.partner_id),
+    relatorios: n.reports[0]?.count ?? 0,
+    cargos: n.member_terms[0]?.count ?? 0,
+  }));
+}
+
+export type DiretoriaAdmin = { id: string; slug: string; nome: string; cargos: number };
+
+export async function getDiretoriasAdmin(): Promise<DiretoriaAdmin[]> {
+  await exigirPapel(ADMIN);
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("diretorias")
+    .select("id, slug, nome, member_terms(count)")
+    .order("ordem")
+    .order("nome");
+  if (error) falha("diretorias", error);
+  return data.map((d) => ({ id: d.id, slug: d.slug, nome: d.nome, cargos: d.member_terms[0]?.count ?? 0 }));
+}
+
+export type ParceiroAdmin = {
+  id: string;
+  nome: string;
+  url: string;
+  logoPath: string | null;
+  institucional: boolean;
+  nucleos: string[];
+};
+
+export async function getParceirosAdmin(): Promise<ParceiroAdmin[]> {
+  await exigirPapel(ADMIN);
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("partners")
+    .select("id, nome, url, logo_path, institucional, nucleo_partners(nucleo_id)")
+    .order("ordem")
+    .order("nome");
+  if (error) falha("partners", error);
+  return data.map((p) => ({
+    id: p.id,
+    nome: p.nome,
+    url: p.url ?? "",
+    logoPath: p.logo_path,
+    institucional: p.institucional,
+    nucleos: p.nucleo_partners.map((n) => n.nucleo_id),
+  }));
+}
+
+export type SecaoHistoriaAdmin = {
+  id: string;
+  periodo: string;
+  titulo: string;
+  texto: string;
+  fotos: string[];
+  conquistas: string[];
+};
+
+export async function getHistoriaAdmin(): Promise<SecaoHistoriaAdmin[]> {
+  await exigirPapel(ADMIN);
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("history_sections")
+    .select("id, periodo, titulo, texto, fotos, conquistas")
+    .order("ordem")
+    .order("created_at");
+  if (error) falha("history_sections", error);
+  return data.map((s) => ({ ...s, texto: s.texto ?? "" }));
+}
+
+export type EtapaPS = { id: string; titulo: string; descricao: string };
+
+export async function getEtapasAdmin(): Promise<EtapaPS[]> {
+  await exigirPapel(ADMIN);
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("ps_steps")
+    .select("id, titulo, descricao")
+    .order("ordem")
+    .order("created_at");
+  if (error) falha("ps_steps", error);
+  return data.map((e) => ({ ...e, descricao: e.descricao ?? "" }));
+}
+
+/** Contagens para a página inicial da aba Conteúdo. */
+export async function getResumoConteudo() {
+  await exigirPapel(ADMIN);
+  const supabase = await createClient();
+  const contar = async (tabela: "nucleos" | "diretorias" | "partners" | "history_sections" | "ps_steps" | "calendars") => {
+    const { count, error } = await supabase.from(tabela).select("id", { count: "exact", head: true });
+    if (error) falha(tabela, error);
+    return count ?? 0;
+  };
+  const [nucleos, diretorias, parceiros, historia, etapas, calendarios] = await Promise.all([
+    contar("nucleos"),
+    contar("diretorias"),
+    contar("partners"),
+    contar("history_sections"),
+    contar("ps_steps"),
+    contar("calendars"),
+  ]);
+  return { nucleos, diretorias, parceiros, historia, etapas, calendarios };
+}

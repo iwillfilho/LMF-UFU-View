@@ -1,13 +1,13 @@
 import "server-only";
 
-import { BYTES_ASSINATURA, ehPdf } from "@/lib/arquivos";
+import { BYTES_ASSINATURA, ehPdf, extensaoImagem, IMAGEM_MAX, MIME_IMAGEM, primeirosBytes } from "@/lib/arquivos";
 import { publicUrl } from "@/lib/storage";
 import type { createClient } from "@/lib/supabase/server";
 
 /** Operações de Storage usadas pelas Server Actions, sempre com a sessão de quem está logado. */
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
-export type Bucket = "fotos" | "relatorios" | "documentos";
+export type Bucket = "fotos" | "relatorios" | "documentos" | "site";
 
 /** Arquivos de uma pasta, com a data de criação. Falha de listagem vira lista vazia (e log). */
 export async function listarPasta(supabase: Supabase, bucket: Bucket, pasta: string) {
@@ -46,4 +46,35 @@ export async function conferirPdf(supabase: Supabase, bucket: "relatorios" | "do
     console.error("conferir PDF", e);
     return false;
   }
+}
+
+/**
+ * Imagem enviada num campo de formulário (já reduzida no navegador). Confere
+ * tamanho e conteúdo real; null se o campo veio vazio.
+ */
+export async function lerImagem(valor: FormDataEntryValue | null): Promise<{ arquivo: File } | { erro: string } | null> {
+  if (!(valor instanceof File) || valor.size === 0) return null;
+  if (valor.size > IMAGEM_MAX) return { erro: "A imagem pode ter no máximo 5 MB." };
+  if (!extensaoImagem(await primeirosBytes(valor))) return { erro: "Envie a imagem em JPG, PNG ou WebP." };
+  return { arquivo: valor };
+}
+
+/** Envia uma imagem já conferida para <pasta>/<uuid>.<ext>. Devolve o caminho ou null. */
+export async function subirImagem(supabase: Supabase, bucket: "fotos" | "site", pasta: string, arquivo: Blob) {
+  const ext = extensaoImagem(await primeirosBytes(arquivo));
+  if (!ext) return null;
+  const path = `${pasta}/${crypto.randomUUID()}.${ext}`;
+  const { error } = await supabase.storage.from(bucket).upload(path, arquivo, { contentType: MIME_IMAGEM[ext], upsert: false });
+  if (error) {
+    console.error(`upload ${bucket}/${path}`, error);
+    return null;
+  }
+  return path;
+}
+
+/** Apaga da pasta tudo o que não estiver em `manter` (depois que o banco já aponta para os novos). */
+export async function podarPasta(supabase: Supabase, bucket: Bucket, pasta: string, manter: (string | null)[]) {
+  const ficam = new Set(manter.filter(Boolean));
+  const sobras = (await listarPasta(supabase, bucket, pasta)).map((f) => f.path).filter((p) => !ficam.has(p));
+  await remover(supabase, bucket, sobras);
 }
