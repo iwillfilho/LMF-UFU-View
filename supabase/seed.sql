@@ -89,6 +89,12 @@ from (values
 ) as r(slug, titulo, resumo, tipo, nucleo_slug, setor, ticker, pdf_path, publicado)
 join public.nucleos n on n.slug = r.nucleo_slug;
 
+-- --- Calendários da Área Restrita -----------------------------------------
+-- Exemplo público (feriados nacionais do Google). Os calendários reais da LMF
+-- são cadastrados pela Área Restrita.
+insert into public.calendars (nome, google_calendar_id, cor, ordem) values
+  ('Feriados nacionais (exemplo)', 'pt-br.brazilian#holiday@group.v.calendar.google.com', '#C455ED', 0);
+
 -- --- Acessos iniciais (e-mails genéricos de exemplo) ------------------------
 -- Troque pelos e-mails Google reais antes de usar fora do ambiente local.
 insert into public.access_grants (email, role, member_id, granted_by)

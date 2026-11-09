@@ -12,7 +12,7 @@
 -- =============================================================================
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(53);
+select plan(63);
 
 -- Liberação antes de a conta existir (caminho normal).
 insert into public.access_grants (email, role) values ('rh@teste.local', 'rh');
@@ -26,6 +26,9 @@ insert into auth.users (id, email) values
   ('a0000000-0000-0000-0000-000000000004', 'rh@teste.local'),
   ('a0000000-0000-0000-0000-000000000005', 'membro@teste.local'),
   ('a0000000-0000-0000-0000-000000000006', 'estranho@teste.local');
+
+-- Documento interno de exemplo (só existe dentro desta transação).
+insert into public.documents (titulo, categoria, file_path) values ('Estatuto Social', 'estatuto', 'e/estatuto.pdf');
 
 -- Liberação depois de a conta existir.
 insert into public.access_grants (email, role) values ('editor@teste.local', 'editor');
@@ -79,6 +82,10 @@ select throws_ok($$select * from public.hr_records$$, '42501', null,
   'visitante não lê pontos/strikes');
 select throws_ok($$select * from public.restricted_settings$$, '42501', null,
   'visitante não lê o link do Drive');
+select throws_ok($$select * from public.calendars$$, '42501', null,
+  'visitante não lê os calendários internos');
+select throws_ok($$select * from public.documents$$, '42501', null,
+  'visitante não lê a lista de documentos internos');
 select lives_ok(
   $$insert into public.contact_messages (nome, email, mensagem) values ('Visitante', 'visitante@teste.local', 'Olá!')$$,
   'visitante envia mensagem de contato');
@@ -102,6 +109,16 @@ set local request.jwt.claim.sub = 'a0000000-0000-0000-0000-000000000005';
 
 select results_eq($$select count(*)::int from public.restricted_settings$$, array[1],
   'membro lê as configurações restritas (Drive)');
+select results_eq($$select count(*)::int from public.calendars$$, array[1],
+  'membro lê os calendários');
+select throws_ok(
+  $$insert into public.calendars (nome, google_calendar_id) values ('Pessoal', 'pessoal@group.calendar.google.com')$$,
+  '42501', null, 'membro não cadastra calendário');
+select results_eq($$select count(*)::int from public.documents$$, array[1],
+  'membro lê a lista de documentos');
+select throws_ok(
+  $$insert into public.documents (titulo, categoria, file_path) values ('Falso', 'auxiliar', 'x/falso.pdf')$$,
+  '42501', null, 'membro não cadastra documento');
 select results_eq($$select count(*)::int from public.reports$$, array[1],
   'membro não vê rascunhos de relatório');
 select throws_ok(
@@ -167,6 +184,10 @@ set local request.jwt.claim.sub = 'a0000000-0000-0000-0000-000000000006';
 
 select is_empty($$select * from public.restricted_settings$$,
   'conta sem acesso não lê o Drive');
+select is_empty($$select * from public.calendars$$,
+  'conta sem acesso não lê os calendários');
+select is_empty($$select * from public.documents$$,
+  'conta sem acesso não lê a lista de documentos');
 select is_empty($$select * from public.member_private$$,
   'conta sem acesso não lê contatos dos membros');
 select throws_ok(
@@ -183,6 +204,12 @@ select results_eq($$update public.site_settings set ps_aberto = true returning p
 select lives_ok(
   $$update public.restricted_settings set drive_url = 'https://drive.google.com/drive/folders/teste'$$,
   'presidente edita o link do Drive');
+select lives_ok(
+  $$insert into public.calendars (nome, google_calendar_id, cor) values ('Diretoria', 'diretoria@group.calendar.google.com', '#3F0953')$$,
+  'presidente cadastra calendário');
+select lives_ok(
+  $$insert into public.documents (titulo, categoria, file_path) values ('Regimento Interno', 'regimento', 'r/regimento.pdf')$$,
+  'presidente cadastra documento');
 select results_eq($$select count(*)::int from public.alumni_submissions$$, array[1],
   'presidente vê cadastros de alumni pendentes');
 select results_eq($$select count(*)::int from public.contact_messages$$, array[1],

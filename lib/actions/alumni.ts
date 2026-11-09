@@ -3,22 +3,13 @@
 import { z } from "zod";
 
 import { type FormState, HONEYPOT, primeiroErro, valoresTexto } from "@/lib/actions/form-state";
+import { extensaoImagem, MIME_IMAGEM, primeirosBytes } from "@/lib/arquivos";
 import { createPublicClient } from "@/lib/supabase/public";
 
 const CAMPOS = ["nome", "curso", "email", "linkedin", "gestao_trainee", "gestoes", "cargos", "mensagem"];
 
 const FOTO_MAX = 5 * 1024 * 1024;
 const FOTO_TIPOS: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
-const MIME_POR_EXT: Record<string, string> = { jpg: "image/jpeg", png: "image/png", webp: "image/webp" };
-
-/** Confere os primeiros bytes (magic numbers): o Content-Type enviado pelo cliente não é confiável. */
-function extensaoPelaAssinatura(b: Uint8Array): "jpg" | "png" | "webp" | null {
-  const ascii = (de: number, ate: number) => String.fromCharCode(...b.slice(de, ate));
-  if (b.length >= 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return "jpg";
-  if (b.length >= 8 && [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a].every((v, i) => b[i] === v)) return "png";
-  if (b.length >= 12 && ascii(0, 4) === "RIFF" && ascii(8, 12) === "WEBP") return "webp";
-  return null;
-}
 
 const opcional = (max: number, msg: string) => z.string().trim().max(max, msg);
 
@@ -66,7 +57,7 @@ export async function enviarCadastroAlumni(_anterior: FormState, formData: FormD
 
   let fotoExt: "jpg" | "png" | "webp" | null = null;
   if (temFoto && !erros.foto) {
-    fotoExt = extensaoPelaAssinatura(new Uint8Array(await foto.slice(0, 12).arrayBuffer()));
+    fotoExt = extensaoImagem(await primeirosBytes(foto));
     if (!fotoExt) erros.foto = "O arquivo não parece ser uma imagem JPG, PNG ou WebP válida.";
   }
 
@@ -82,7 +73,7 @@ export async function enviarCadastroAlumni(_anterior: FormState, formData: FormD
     fotoPath = `alumni/${crypto.randomUUID()}.${fotoExt}`;
     const { error } = await supabase.storage
       .from("envios")
-      .upload(fotoPath, foto, { contentType: MIME_POR_EXT[fotoExt], upsert: false });
+      .upload(fotoPath, foto, { contentType: MIME_IMAGEM[fotoExt], upsert: false });
     if (error) {
       console.error("envios upload", error);
       return {

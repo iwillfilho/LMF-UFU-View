@@ -13,6 +13,14 @@ export function compararGestao(a: string, b: string) {
   return a.localeCompare(b, "en", { numeric: true });
 }
 
+const anoMes = new Intl.DateTimeFormat("en-CA", { year: "numeric", month: "2-digit", timeZone: TZ });
+
+/** Gestão (semestre) de uma data no horário de Brasília: jan–jun → .1, jul–dez → .2. */
+export function gestaoDe(data: Date) {
+  const [ano, mes] = anoMes.format(data).split("-");
+  return `${ano}.${Number(mes) <= 6 ? 1 : 2}`;
+}
+
 /** "2025.1 – 2026.2", ou só "2026.2" se for uma gestão. */
 export function intervaloGestoes(gestoes: string[]) {
   if (gestoes.length === 0) return null;

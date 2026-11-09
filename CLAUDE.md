@@ -8,7 +8,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Institutional site for LMF UFU (Liga do Mercado Financeiro da UFU), being rewritten from a static HTML site into **Next.js 16 (App Router) + TypeScript + Tailwind v4 + shadcn/ui**. The backend is Supabase and hosting is Vercel. The rewrite lives on `main` of https://github.com/iwillfilho/LMF-UFU-View (MIT license). The history was restarted there; the old `gustavokono/Site-LMF-UFU` repo and its `react-rewrite` branch are no longer a remote. All user-facing content and code comments are in Brazilian Portuguese; keep them in pt-BR.
 
-The approved implementation plan (routes, Supabase schema, RLS roles, phases) is in `~/.claude/plans/analise-as-modifica-es-pedidas-wondrous-dragonfly.md`. The stakeholders' change requests are in `../Alterações site LMF.pdf`, one directory above the repo. Phases 1 (foundation), 2 (database) and 3 (public pages on Supabase) are done. Next up is Phase 4: Google login and the Área Restrita. Role permissions and the login flow are specified in `~/.claude/plans/quero-saber-o-que-transient-kay.md`. Only `editor`/`presidente`/`diretor_rh` publish. Members read only their own `hr_records`. Only `presidente`/`diretor_rh` edit fixed content.
+The approved implementation plan (routes, Supabase schema, RLS roles, phases) is in `~/.claude/plans/analise-as-modifica-es-pedidas-wondrous-dragonfly.md`. The stakeholders' change requests are in `../Alterações site LMF.pdf`, one directory above the repo. Phases 1 (foundation), 2 (database) and 3 (public pages on Supabase) are done. Phase 4 (Google login and the Área Restrita) is **in progress**:
+- Done in code: Google login, `proxy.ts`, the role layer (`lib/auth.ts`), the Área Restrita layout and menu, the Calendário tab (4.2), Publicações (4.3: list, post editor with Tiptap, reports with direct PDF upload; `lib/actions/publicacoes.ts`, `components/area-restrita/`, `app/area-restrita/publicacoes/`) , Documentos (4.4: `lib/actions/documentos.ts`, `app/area-restrita/documentos/`) and pontos/strikes (4.5a: `lib/actions/rh.ts`, `app/area-restrita/rh/`, `app/area-restrita/meus-pontos/`).
+- Not done yet: Acessos (4.5b), Membros and alumni approval (4.5c), fixed content editing (4.5d), the PS toggle (4.6). Ferramenta is a placeholder (`PaginaProvisoria`).
+- RH rules: `rh`, `diretor_rh` and `presidente` add records; only `presidente`/`diretor_rh` correct or delete them. Meus pontos filters by the member linked to the account (`member_private.user_id`), because RLS alone would show RH users everyone's records. The default gestão is the current semester in Brasília time (`gestaoDe` in `lib/format.ts`: Jan–Jun → `.1`, Jul–Dec → `.2`).
+- Documentos rules: PDFs live in the private bucket under `documentos/<id>/`; they are never linked directly. `/area-restrita/documentos/[id]/arquivo` checks the session and role on every click and redirects to a 60-second signed URL (`?baixar` forces download). Only `presidente`/`diretor_rh` manage documents and the Drive link (`restricted_settings.drive_url`).
+- Shared Storage helpers for Server Actions (`listarPasta`, `remover`, `conferirPdf`) are in `lib/storage-servidor.ts`. Labels shared by server and client components go in `lib/labels.ts`: a plain object exported from a `"use client"` file arrives on the server as a client reference, not the object.
+- Publicações rules: a post or report is created as a draft first (title + type), then edited; images live in `fotos/posts/<id>/` and PDFs in `relatorios/<id>/`. `posts.corpo` is validated and rebuilt by `lib/corpo-post.ts` (only what `rich-text.tsx` renders). Saving deletes files removed from the post, and unreferenced uploads older than 24 h. Edit forms submit with `startTransition`, not the `action` prop, because React 19's automatic form reset desyncs controlled selects/checkboxes.
+- `getSessao()` calls `connection()` before `getClaims()`: the token expiry check reads the clock, which Next forbids during (partial) prerendering.
+- Dashboard setup is still pending (see "Hosted Supabase").
+
+Role permissions and the login flow are specified in `~/.claude/plans/quero-saber-o-que-transient-kay.md`. Only `editor`/`presidente`/`diretor_rh` publish. Members read only their own `hr_records`. Only `presidente`/`diretor_rh` edit fixed content.
 
 The site is deployed at https://lmf-ufu.vercel.app (Vercel project `will-wesley/lmf-ufu`). The project is connected to `iwillfilho/LMF-UFU-View` through Git integration, so a push to `main` deploys to production. `vercel deploy --prod` is still available for manual deploys.
 
@@ -26,10 +36,11 @@ Git conventions: `origin` is `git@github.com:iwillfilho/LMF-UFU-View.git`, and c
   - The INTB3 PDF was uploaded with `npx supabase seed buckets --remote`.
 - Vercel env vars:
   - `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` are set for Production, Preview and Development.
-  - `NEXT_PUBLIC_SITE_URL=https://lmf-ufu.vercel.app` is set for Production only. Change it when the domain `lmfufu.com.br` goes live.
+  - `NEXT_PUBLIC_SITE_URL=https://lmf-ufu.vercel.app` is set for Production only. Change it when the domain `lmfufu.com.br` goes live. Besides metadata, it is the origin of the login redirects (`lib/origem.ts`); without it (local, previews) the request `Host` is used.
   - The publishable key is public by design. Never put the secret/service key in `NEXT_PUBLIC_*` vars or in the repo.
-- Pending for Phase 4, all set in the Dashboard:
-  - Enable Google as the auth provider.
+- Pending for Phase 4, all set in the Dashboard (the code side is ready; none of this is confirmed as done):
+  - Enable Google as the auth provider. Locally it is `enabled = false` in `supabase/config.toml` (needs a Google OAuth client in `SUPABASE_AUTH_EXTERNAL_GOOGLE_*`).
+  - The callback is `/auth/callback`; add it to the redirect URLs.
   - Set Site URL and redirect URLs to the Vercel domain.
   - Turn on the `before_user_created` hook: `pg-functions://postgres/private/before_user_created`.
   - Create the first `access_grants` with the **real** e-mails of the Presidente and Diretor de RH. Production has zero grants.
@@ -51,7 +62,7 @@ npm run db:types     # regenerates lib/supabase/database.types.ts; run after eve
 npm run db:push      # applies pending migrations to the hosted project (see "Hosted Supabase")
 ```
 
-Playwright is planned. The only automated tests so far are the pgTAP ones.
+There are no tests inside this repo besides the pgTAP ones. A separate QA suite (Vitest unit, Playwright E2E, axe a11y, RLS battery) lives in the sibling directory `../lmf-testes`, imports from this repo and does not modify it; see its README.
 
 ## Database (supabase/)
 
@@ -66,7 +77,8 @@ Playwright is planned. The only automated tests so far are the pgTAP ones.
   - `members` is public; contact info and the login link live in `member_private`.
   - `site_settings` is public; `restricted_settings` (Drive URL) is members-only.
 - `seed.sql` is local-only. The repo is public, so never put real e-mails or the Drive URL in it. The seed's admin e-mails are placeholders: `presidente@lmf.com`, `diretor.rh@lmf.com`.
-- Any permission change must come with a test in `supabase/tests/permissoes.test.sql`.
+- Any permission change must come with a test in `supabase/tests/permissoes.test.sql`. Keep `select plan(N)` equal to the number of assertions (63 now).
+- `calendars` (Google Calendar IDs shown in the Calendário tab) is members-read and admin-write. The seed has one public example (Brazilian holidays); production starts empty.
 
 ## Next.js 16 specifics (read node_modules/next/dist/docs before using unfamiliar APIs)
 
@@ -74,20 +86,30 @@ Playwright is planned. The only automated tests so far are the pgTAP ones.
   - Data must be cached explicitly with `'use cache'` + `cacheLife` + `cacheTag`. After a mutation, use `updateTag`/`revalidateTag`.
   - Anything that reads `cookies()`/`headers()`/`searchParams` must sit inside `<Suspense>`, otherwise the build fails.
   - Public pages should read Supabase with a cookieless client inside `'use cache'` functions. Auth-dependent UI should stream behind Suspense.
-- Route protection lives in `proxy.ts` (formerly `middleware.ts`). With `@supabase/ssr`, call `supabase.auth.getClaims()` there.
+- Route protection starts in `proxy.ts` (formerly `middleware.ts`). It refreshes the session with `supabase.auth.getClaims()`, sends logged-out visitors from `/area-restrita/*` to `/login`, and sets `no-store`. Its matcher covers only `/area-restrita`, `/login` and `/auth`, so public pages stay static. It does **not** check roles; see "Área Restrita" below.
 - `Date.now()`/`new Date()` in prerendered components breaks prerendering. Avoid it, or isolate it behind Suspense.
 
 ## Architecture
 
 - `app/layout.tsx`: root `<html lang="pt-BR">`, Inter + Instrument Serif via `next/font` (CSS vars `--font-inter`/`--font-instrument-serif`), `ThemeProvider` (next-themes, class-based, dark is the default), and the default metadata.
-- `app/(public)/`: public pages sharing `layout.tsx`, which renders `SiteHeader` + `SiteFooter` and has a skip link. The restricted area (`app/area-restrita/`) will get its own layout and must not live under `(public)`.
+- `app/(public)/`: public pages sharing `layout.tsx`, which renders `SiteHeader` + `SiteFooter` and has a skip link. The restricted area (`app/area-restrita/`) has its own layout and must not live under `(public)`. `app/login/` and `app/auth/` (`callback`, `sem-acesso`) are outside both groups.
 - Data layer:
   - `lib/queries.ts` (server-only): every public read is a `'use cache'` function with `cacheLife("conteudo")` (a 5-minute profile defined in `next.config.ts`) and a `cacheTag` from `TAGS`. Phase 4 Server Actions must call `updateTag(TAGS.x)` after writing.
   - The functions also map rows to view types (`Membro`, `Relatorio`, `PostResumo`…).
+- Área Restrita (everything uses the logged-in user's session, so RLS applies; nothing here uses `'use cache'`):
+  - `lib/supabase/server.ts` (cookie client, `@supabase/ssr`) and `lib/supabase/env.ts` (env check shared with `public.ts` and `proxy.ts`). `lib/supabase/client.ts` (browser client) exists but nothing uses it yet.
+  - `lib/auth.ts`: `getSessao()` reads roles from `user_roles` on every request, not from the JWT, so a revoked access takes effect on the next page. `exigirPapel(papeis)` is called at the top of **every** page, read (`lib/restrito.ts`) and Server Action. No session redirects to `/login`; no role at all goes to `/auth/sem-acesso` (signs out); wrong role gives a 404.
+  - `lib/papeis.ts`: role groups (`ADMIN`, `PUBLICA`, `RH`, `TODOS`) that mirror the `private.*` helpers, plus `ABAS`, the tab list with who sees each. A new tab needs an entry there and `exigirPapel` in its page.
+  - Login: `lib/actions/auth.ts` (`entrarComGoogle`, `sair`) → Google → `app/auth/callback/route.ts`. `?next=` goes through `destinoSeguro()` (`lib/auth-destino.ts`), which only accepts paths inside `/area-restrita`.
+  - `lib/actions/publicacoes.ts`: posts and reports CRUD. Order in every action is role → Zod → database → files → cache (`updateTag`). Old files are deleted only after the row points to the new ones, and orphans older than 24h in the folder are cleaned up.
+  - Uploads are validated by magic numbers in `lib/arquivos.ts` (shared with the alumni form), never by `Content-Type`. Images up to 5 MB, PDFs up to 20 MB.
+  - `lib/corpo-post.ts` rebuilds the Tiptap JSON with only the nodes, marks and attributes `rich-text.tsx` can render, and rejects the rest. Keep the two in sync when adding a Tiptap extension.
+  - `lib/calendario.ts` builds the Google Calendar embed URL from the `calendars` table. `lib/data-hora.ts` converts `datetime-local` to timestamptz in Brasília time (UTC−3).
+  - UI is in `components/area-restrita/` (menu, `agenda`, post form, `editor-texto` (Tiptap), `imagens-post`, `excluir`).
 - `lib/supabase/public.ts`: the cookieless `anon` client. It forces `cache: "no-store"` on fetch. Without that, Next keeps Supabase responses in `.next/cache/fetch-cache`, which survives between builds and served deleted data.
 - `lib/storage.ts` `publicUrl()`: builds public Storage URLs. Missing photos and banners fall back to `/imagens/*`. `next.config.ts` allows the Supabase host in `images.remotePatterns`, and `dangerouslyAllowLocalIP` is on only when that host is local.
 - Forms:
-  - Server Actions in `lib/actions/` (Zod + honeypot) insert with the `anon` client. RLS only allows inserting, never reading.
+  - Public forms: Server Actions in `lib/actions/` (`contato`, `alumni`; Zod + honeypot) insert with the `anon` client. RLS only allows inserting, never reading. `next.config.ts` raises the Server Action body limit to 6 MB for the alumni photo.
   - The alumni photo goes to the private `envios/alumni/` bucket.
   - The UI lives in `components/forms/`. `useActionState` keeps the typed values when there is an error.
 - URL state:
