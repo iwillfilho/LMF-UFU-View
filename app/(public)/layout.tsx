@@ -1,10 +1,9 @@
 import { SiteFooter } from "@/components/site/site-footer";
 import { SiteHeader } from "@/components/site/site-header";
 import { getSiteSettings } from "@/lib/queries";
-import { siteConfig } from "@/lib/site-config";
 
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
-  const { psAberto, formsUrl } = await getSiteSettings();
+  const { psAberto } = await getSiteSettings();
 
   return (
     <>
@@ -14,7 +13,7 @@ export default async function PublicLayout({ children }: { children: React.React
       >
         Pular para o conteúdo
       </a>
-      <SiteHeader psAberto={psAberto} psUrl={formsUrl ?? siteConfig.contato.linktree} />
+      <SiteHeader psAberto={psAberto} />
       {/* tabIndex=-1: o skip link precisa conseguir passar o foco para cá. */}
       <main id="conteudo" tabIndex={-1} className="flex-1 pt-18 outline-none">
         {children}

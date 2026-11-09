@@ -49,6 +49,19 @@ export async function getSiteSettings(): Promise<SiteSettings> {
   };
 }
 
+export type EtapaPS = { id: string; titulo: string; descricao: string | null };
+
+/** Etapas do Processo Seletivo, na ordem definida em Conteúdo → Processo Seletivo. */
+export async function getEtapasPS(): Promise<EtapaPS[]> {
+  "use cache";
+  cacheLife("conteudo");
+  cacheTag(TAGS.psSteps);
+
+  const { data, error } = await createPublicClient().from("ps_steps").select("id, titulo, descricao").order("ordem");
+  if (error) falha("ps_steps", error);
+  return data;
+}
+
 // =============================================================================
 // Parceiros e núcleos
 // =============================================================================

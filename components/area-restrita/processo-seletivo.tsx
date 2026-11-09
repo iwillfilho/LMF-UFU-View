@@ -58,7 +58,7 @@ function FormAbertura({ ps }: { ps: PsAdmin }) {
         label="Link do formulário de inscrição (Google Forms)"
         opcional={!aberto}
         erro={e.forms_url}
-        dica="https://docs.google.com/forms/… ou https://forms.gle/…"
+        dica="Use o link público (https://docs.google.com/forms/…/viewform) para o formulário aparecer embutido na página do PS; links forms.gle abrem só pelo botão."
       >
         <Input
           {...ariaCampo("ps-forms", e.forms_url, "dica")}

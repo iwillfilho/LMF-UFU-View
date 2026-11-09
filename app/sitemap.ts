@@ -16,6 +16,7 @@ const ROTAS_FIXAS = [
   "/relatorios",
   "/nossa-historia",
   "/contato",
+  "/processo-seletivo",
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
