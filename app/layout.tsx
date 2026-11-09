@@ -28,10 +28,14 @@ export const metadata: Metadata = {
     template: `%s | ${siteConfig.nome}`,
   },
   description: siteConfig.descricao,
+  // "./" é resolvido contra o caminho de cada rota (sem a query): cada página
+  // ganha a própria canonical e og:url, e ?membro=/?nucleo= não viram duplicatas.
+  alternates: { canonical: "./" },
   openGraph: {
     type: "website",
     locale: "pt_BR",
     siteName: siteConfig.nomeCompleto,
+    url: "./",
   },
 };
 

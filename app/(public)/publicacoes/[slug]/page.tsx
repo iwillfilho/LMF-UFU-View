@@ -8,6 +8,9 @@ import { RichText } from "@/components/site/rich-text";
 import { formatarData } from "@/lib/format";
 import { CATEGORIA_LABEL } from "@/lib/labels";
 import { getPost, getSlugsPosts } from "@/lib/queries";
+import { siteConfig } from "@/lib/site-config";
+
+import ogPadrao from "../../../opengraph-image.png";
 
 /** Com Cache Components a lista não pode ser vazia; o marcador cai em notFound(). */
 const SEM_POSTS = "__sem-publicacoes__";
@@ -24,7 +27,17 @@ export async function generateMetadata({ params }: PageProps<"/publicacoes/[slug
   return {
     title: post.titulo,
     description: post.resumo ?? undefined,
-    openGraph: { title: post.titulo, description: post.resumo ?? undefined, images: post.capaUrl ? [post.capaUrl] : undefined },
+    // O openGraph da página substitui o do layout inteiro: repete os campos comuns.
+    openGraph: {
+      type: "article",
+      locale: "pt_BR",
+      siteName: siteConfig.nomeCompleto,
+      url: "./",
+      title: post.titulo,
+      description: post.resumo ?? undefined,
+      // Sem capa, a imagem padrão do app/ não é herdada: precisa vir explícita.
+      images: post.capaUrl ? [post.capaUrl] : [{ url: ogPadrao.src, width: ogPadrao.width, height: ogPadrao.height }],
+    },
   };
 }
 
