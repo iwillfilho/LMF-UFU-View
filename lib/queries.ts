@@ -161,6 +161,8 @@ export async function getEquipe(): Promise<Equipe> {
        member_terms(gestao, cargo, ordem, diretorias(slug, nome), nucleos(slug, nome)),
        report_authors(report_id)`,
     )
+    // Anonimizados (LGPD) só aparecem como autor de relatório, nunca nas listas.
+    .eq("anonimizado", false)
     .order("nome");
   if (error) falha("members", error);
 
@@ -212,7 +214,8 @@ export type Relatorio = {
   ticker: string | null;
   pdfUrl: string | null;
   publicadoEm: string | null;
-  autores: { slug: string; nome: string }[];
+  /** anonimo: cadastro anonimizado (LGPD), mostrado sem link para o currículo. */
+  autores: { slug: string; nome: string; anonimo: boolean }[];
 };
 
 export async function getRelatorios(): Promise<Relatorio[]> {
@@ -225,7 +228,7 @@ export async function getRelatorios(): Promise<Relatorio[]> {
     .select(
       `slug, titulo, resumo, tipo, setor, ticker, pdf_path, publicado_em,
        nucleos(slug, nome),
-       report_authors(ordem, members(slug, nome))`,
+       report_authors(ordem, members(slug, nome, anonimizado))`,
     )
     .eq("publicado", true)
     .order("publicado_em", { ascending: false });
@@ -243,7 +246,7 @@ export async function getRelatorios(): Promise<Relatorio[]> {
     publicadoEm: r.publicado_em,
     autores: [...r.report_authors]
       .sort((a, b) => a.ordem - b.ordem)
-      .flatMap(({ members: m }) => (m ? [{ slug: m.slug, nome: m.nome }] : [])),
+      .flatMap(({ members: m }) => (m ? [{ slug: m.slug, nome: m.nome, anonimo: m.anonimizado }] : [])),
   }));
 }
 

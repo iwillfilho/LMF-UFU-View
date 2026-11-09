@@ -12,7 +12,7 @@
 -- =============================================================================
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(63);
+select plan(65);
 
 -- Liberação antes de a conta existir (caminho normal).
 insert into public.access_grants (email, role) values ('rh@teste.local', 'rh');
@@ -260,6 +260,13 @@ select throws_ok($$insert into storage.objects (bucket_id, name) values ('envios
   '42501', null, 'visitante só envia foto dentro de alumni/');
 select lives_ok($$insert into storage.objects (bucket_id, name) values ('envios', 'alumni/x.jpg')$$,
   'visitante envia foto do cadastro de alumni');
+
+-- Anonimização (LGPD): o banco não aceita "anonimizado" com dados pessoais.
+reset role;
+select throws_ok($$update public.members set anonimizado = true, status = 'alumni', curso = 'Economia' where slug = (select slug from public.members limit 1)$$,
+  '23514', null, 'anonimizado não pode manter curso, foto ou LinkedIn');
+select lives_ok($$update public.members set anonimizado = true, status = 'alumni', curso = null, linkedin = null, foto_path = null where slug = (select slug from public.members limit 1)$$,
+  'anonimizado sem dados pessoais é aceito');
 
 select * from finish();
 rollback;

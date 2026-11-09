@@ -207,14 +207,14 @@ isOneToOne: false
                   ]
                 },"members": {
                   Row: {
-                    "created_at": string,"curso": string | null,"foto_path": string | null,"gestao_trainee": string | null,"id": string,"linkedin": string | null,"nome": string,"slug": string,"status": Database["public"]['Enums']["member_status"],"updated_at": string,"updated_by": string | null
+                    "anonimizado": boolean,"created_at": string,"curso": string | null,"foto_path": string | null,"gestao_trainee": string | null,"id": string,"linkedin": string | null,"nome": string,"slug": string,"status": Database["public"]['Enums']["member_status"],"updated_at": string,"updated_by": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"curso"?: string | null,"foto_path"?: string | null,"gestao_trainee"?: string | null,"id"?: string,"linkedin"?: string | null,"nome": string,"slug": string,"status"?: Database["public"]['Enums']["member_status"],"updated_at"?: string,"updated_by"?: string | null
+                    "anonimizado"?: boolean,"created_at"?: string,"curso"?: string | null,"foto_path"?: string | null,"gestao_trainee"?: string | null,"id"?: string,"linkedin"?: string | null,"nome": string,"slug": string,"status"?: Database["public"]['Enums']["member_status"],"updated_at"?: string,"updated_by"?: string | null
                   }
                   Update: {
-                    "created_at"?: string,"curso"?: string | null,"foto_path"?: string | null,"gestao_trainee"?: string | null,"id"?: string,"linkedin"?: string | null,"nome"?: string,"slug"?: string,"status"?: Database["public"]['Enums']["member_status"],"updated_at"?: string,"updated_by"?: string | null
+                    "anonimizado"?: boolean,"created_at"?: string,"curso"?: string | null,"foto_path"?: string | null,"gestao_trainee"?: string | null,"id"?: string,"linkedin"?: string | null,"nome"?: string,"slug"?: string,"status"?: Database["public"]['Enums']["member_status"],"updated_at"?: string,"updated_by"?: string | null
                   }
                   Relationships: [
                     

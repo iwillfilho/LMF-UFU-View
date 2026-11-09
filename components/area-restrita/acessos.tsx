@@ -1,66 +1,17 @@
 "use client";
 
 import { X } from "lucide-react";
-import { startTransition, useActionState, useRef, useState } from "react";
+import { useActionState, useRef } from "react";
 
+import { ConfirmarAcao, OpcoesMembro, enviar } from "@/components/area-restrita/campos";
+import { botaoPrimario, botaoSecundario, selectClasse } from "@/components/area-restrita/estilos";
 import { AvisoFormulario, Field, ariaCampo, inputClasse } from "@/components/forms/field";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { concederAcesso, revogarPapel, revogarTudo, vincularMembro } from "@/lib/actions/acessos";
 import { ESTADO_INICIAL, type FormState } from "@/lib/actions/form-state";
 import { DESCRICAO_PAPEL, PAPEIS, type Papel, ROTULO_PAPEL } from "@/lib/papeis";
 import type { MembroRH, PessoaComAcesso } from "@/lib/restrito";
 import { cn } from "@/lib/utils";
-
-const selectClasse = cn(inputClasse, "w-full border border-input");
-const botaoPrimario =
-  "pill bg-primary px-6 py-3 text-base text-primary-foreground transition-colors hover:bg-plum disabled:opacity-60 dark:hover:bg-lilac dark:hover:text-galaxy";
-const botaoSecundario =
-  "inline-flex min-h-11 items-center rounded-full border border-border px-5 text-sm hover:bg-secondary disabled:opacity-60";
-
-type Acao = (anterior: FormState, dados: FormData) => Promise<FormState>;
-
-/** Envia com startTransition (e não pelo prop action) para o React não resetar o formulário. */
-function enviar(acao: (dados: FormData) => void) {
-  return (ev: React.FormEvent<HTMLFormElement>) => {
-    ev.preventDefault();
-    const dados = new FormData(ev.currentTarget);
-    startTransition(() => acao(dados));
-  };
-}
-
-function OpcoesMembro({ membros, vazio }: { membros: MembroRH[]; vazio: string }) {
-  const ativos = membros.filter((m) => !m.alumni);
-  const alumni = membros.filter((m) => m.alumni);
-  return (
-    <>
-      <option value="">{vazio}</option>
-      <optgroup label="Ativos">
-        {ativos.map((m) => (
-          <option key={m.id} value={m.id}>
-            {m.nome}
-          </option>
-        ))}
-      </optgroup>
-      {alumni.length > 0 ? (
-        <optgroup label="Alumni">
-          {alumni.map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.nome}
-            </option>
-          ))}
-        </optgroup>
-      ) : null}
-    </>
-  );
-}
 
 /** Liberar acesso para um e-mail novo (ou somar um papel a um e-mail que já tem acesso). */
 export function FormConceder({ membros }: { membros: MembroRH[] }) {
@@ -145,72 +96,6 @@ export function FormConceder({ membros }: { membros: MembroRH[] }) {
         <AvisoFormulario status={estado.status} mensagem={estado.mensagem} />
       </div>
     </form>
-  );
-}
-
-/** Diálogo de confirmação que mostra o erro do servidor (ex.: último Presidente/Diretor de RH). */
-function ConfirmarAcao({
-  gatilho,
-  gatilhoClasse,
-  gatilhoRotulo,
-  titulo,
-  descricao,
-  confirmar,
-  campos,
-  acao,
-}: {
-  gatilho: React.ReactNode;
-  gatilhoClasse: string;
-  gatilhoRotulo?: string;
-  titulo: string;
-  descricao: string;
-  confirmar: string;
-  campos: Record<string, string>;
-  acao: Acao;
-}) {
-  const [aberto, setAberto] = useState(false);
-  const [estado, executar, executando] = useActionState(async (anterior: FormState, dados: FormData) => {
-    const r = await acao(anterior, dados);
-    if (r.status === "ok") setAberto(false);
-    return r;
-  }, ESTADO_INICIAL);
-
-  return (
-    <Dialog open={aberto} onOpenChange={setAberto}>
-      <DialogTrigger asChild>
-        <button type="button" aria-label={gatilhoRotulo} className={gatilhoClasse}>
-          {gatilho}
-        </button>
-      </DialogTrigger>
-      <DialogContent className="max-w-md">
-        <DialogTitle className="font-serif text-2xl font-normal">{titulo}</DialogTitle>
-        <DialogDescription>{descricao}</DialogDescription>
-        <form className="mt-2 grid gap-4" onSubmit={enviar(executar)}>
-          {Object.entries(campos).map(([nome, valor]) => (
-            <input key={nome} type="hidden" name={nome} value={valor} />
-          ))}
-          {estado.status === "erro" ? (
-            <p role="alert" className="text-sm text-destructive">
-              {estado.mensagem}
-            </p>
-          ) : null}
-          <div className="flex justify-end gap-2">
-            <DialogClose asChild>
-              <button type="button" className="min-h-10 rounded-full px-4 text-sm hover:bg-secondary">
-                Cancelar
-              </button>
-            </DialogClose>
-            <button
-              type="submit"
-              disabled={executando}
-              className="min-h-10 rounded-full bg-destructive px-5 text-sm text-white disabled:opacity-50"
-            >
-              {executando ? "Removendo…" : confirmar}
-            </button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
   );
 }
 

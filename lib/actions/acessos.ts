@@ -4,19 +4,18 @@ import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
+import { liberarAcesso, membroOcupado, mensagemErroAcesso } from "@/lib/acessos-servidor";
 import type { FormState } from "@/lib/actions/form-state";
 import { primeiroErro, valoresTexto } from "@/lib/actions/form-state";
 import { exigirPapel, getSessao } from "@/lib/auth";
-import { ADMIN, PAPEIS, ROTULO_PAPEL } from "@/lib/papeis";
+import { ADMIN, PAPEIS } from "@/lib/papeis";
 import { createClient } from "@/lib/supabase/server";
 
 /**
  * Acessos à Área Restrita: só Presidente e Diretor de RH (iguais às policies de access_grants).
  * access_grants é a fonte da verdade; os triggers do banco derivam user_roles e
- * ligam a conta ao cadastro em member_private. Por isso:
- * - todos os papéis de um e-mail apontam para o mesmo membro (member_private.user_id é único);
- * - um membro só pode estar ligado a um e-mail;
- * - o banco recusa remover o último Presidente/Diretor de RH (erro P0001).
+ * ligam a conta ao cadastro em member_private. As regras de vínculo ficam em
+ * lib/acessos-servidor.ts, compartilhadas com o cadastro de membros.
  */
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
@@ -34,38 +33,10 @@ const concederSchema = z.object({
   papel: z.enum(PAPEIS, "Escolha o papel."),
 });
 
-const ULTIMO_ADMIN =
-  "A LMF precisa de pelo menos um Presidente ou Diretor de RH com acesso. Libere o acesso do sucessor antes de remover este.";
-
-function mensagemErro(error: { code?: string; message: string }, contexto: string) {
-  console.error(contexto, error);
-  if (error.code === "P0001") return ULTIMO_ADMIN;
-  if (error.code === "23505") return "Este e-mail já tem esse papel.";
-  if (error.code === "23503") return "Membro não encontrado. Recarregue a página.";
-  if (error.code === "23514") return "Confira o e-mail: use só letras minúsculas, sem espaços.";
-  if (error.code === "42501") return "Você não tem permissão para esta ação.";
-  return "Não foi possível salvar agora. Tente de novo em instantes.";
-}
-
 /** Membro do formulário: "" (sem vínculo), um UUID, ou inválido (null). */
 function lerMembro(valor: string): string | "" | null {
   if (valor === "") return "";
   return UUID.test(valor) ? valor : null;
-}
-
-type Supabase = Awaited<ReturnType<typeof createClient>>;
-
-/** Erro se o membro já estiver ligado a outro e-mail. */
-async function conferirMembroLivre(supabase: Supabase, membro: string, email: string): Promise<string | null> {
-  const { data, error } = await supabase
-    .from("access_grants")
-    .select("email")
-    .eq("member_id", membro)
-    .neq("email", email)
-    .limit(1);
-  if (error) return mensagemErro(error, "conferir vínculo");
-  if (data.length > 0) return `Este membro já está ligado ao e-mail ${data[0].email}.`;
-  return null;
 }
 
 /** Revogar o próprio acesso: volta ao início da Área Restrita, que confere os papéis de novo. */
@@ -87,42 +58,15 @@ export async function concederAcesso(_anterior: FormState, formData: FormData): 
 
   const { email, papel } = parsed.data;
   const supabase = await createClient();
-  const { data: existentes, error: erroExistentes } = await supabase
-    .from("access_grants")
-    .select("role, member_id")
-    .eq("email", email);
-  if (erroExistentes) return { status: "erro", mensagem: mensagemErro(erroExistentes, "ler acessos"), valores };
-  if (existentes.some((g) => g.role === papel)) {
-    return { status: "erro", mensagem: `${email} já é ${ROTULO_PAPEL[papel]}.`, valores };
+  const r = await liberarAcesso(supabase, email, papel, membroForm || null);
+  if (!r.ok) {
+    return r.campo
+      ? { status: "erro", mensagem: "Revise os campos destacados.", erros: { [r.campo]: r.mensagem }, valores }
+      : { status: "erro", mensagem: r.mensagem, valores };
   }
-
-  // Sem membro no formulário, herda o vínculo que o e-mail já tem.
-  const atual = existentes.find((g) => g.member_id)?.member_id ?? null;
-  const membro = membroForm || atual;
-
-  if (membroForm && membroForm !== atual) {
-    const ocupado = await conferirMembroLivre(supabase, membroForm, email);
-    if (ocupado) {
-      return { status: "erro", mensagem: "Revise os campos destacados.", erros: { membro: ocupado }, valores };
-    }
-    // Um único UPDATE: os triggers só ressincronizam no fim do comando, já com todos os papéis no novo membro.
-    if (existentes.length > 0) {
-      const { error } = await supabase.from("access_grants").update({ member_id: membroForm }).eq("email", email);
-      if (error) return { status: "erro", mensagem: mensagemErro(error, "trocar vínculo"), valores };
-    }
-  }
-
-  const { error } = await supabase.from("access_grants").insert({ email, role: papel, member_id: membro });
-  if (error) return { status: "erro", mensagem: mensagemErro(error, "conceder acesso"), valores };
 
   refresh();
-  return {
-    status: "ok",
-    mensagem:
-      existentes.length > 0
-        ? `${email} agora também é ${ROTULO_PAPEL[papel]}.`
-        : `Acesso liberado para ${email}. A pessoa já pode entrar com essa conta Google.`,
-  };
+  return { status: "ok", mensagem: r.mensagem };
 }
 
 /** Troca (ou remove) o cadastro de membro ligado a um e-mail, em todos os papéis dele. */
@@ -136,7 +80,7 @@ export async function vincularMembro(_anterior: FormState, formData: FormData): 
 
   const supabase = await createClient();
   if (membro) {
-    const ocupado = await conferirMembroLivre(supabase, membro, email.data);
+    const ocupado = await membroOcupado(supabase, membro, email.data);
     if (ocupado) return { status: "erro", mensagem: ocupado, valores };
   }
   const { data, error } = await supabase
@@ -144,7 +88,7 @@ export async function vincularMembro(_anterior: FormState, formData: FormData): 
     .update({ member_id: membro || null })
     .eq("email", email.data)
     .select("id");
-  if (error) return { status: "erro", mensagem: mensagemErro(error, "vincular membro"), valores };
+  if (error) return { status: "erro", mensagem: mensagemErroAcesso(error, "vincular membro"), valores };
   if (data.length === 0) return { status: "erro", mensagem: "Acesso não encontrado. Recarregue a página." };
 
   refresh();
@@ -159,7 +103,7 @@ export async function revogarPapel(_anterior: FormState, formData: FormData): Pr
 
   const supabase = await createClient();
   const { data, error } = await supabase.from("access_grants").delete().eq("id", id).select("email");
-  if (error) return { status: "erro", mensagem: mensagemErro(error, "revogar papel") };
+  if (error) return { status: "erro", mensagem: mensagemErroAcesso(error, "revogar papel") };
   if (data.length === 0) return { status: "erro", mensagem: "Acesso não encontrado. Recarregue a página." };
 
   await sairSeFoiOProprio(data[0].email);
@@ -175,7 +119,7 @@ export async function revogarTudo(_anterior: FormState, formData: FormData): Pro
 
   const supabase = await createClient();
   const { data, error } = await supabase.from("access_grants").delete().eq("email", email.data).select("id");
-  if (error) return { status: "erro", mensagem: mensagemErro(error, "revogar acesso") };
+  if (error) return { status: "erro", mensagem: mensagemErroAcesso(error, "revogar acesso") };
   if (data.length === 0) return { status: "erro", mensagem: "Acesso não encontrado. Recarregue a página." };
 
   await sairSeFoiOProprio(email.data);

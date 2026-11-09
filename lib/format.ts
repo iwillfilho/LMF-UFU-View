@@ -32,3 +32,9 @@ export function intervaloGestoes(gestoes: string[]) {
 export function plural(n: number, singular: string, pluralForma: string) {
   return `${n} ${n === 1 ? singular : pluralForma}`;
 }
+
+/** Gestão seguinte: 2026.1 → 2026.2, 2026.2 → 2027.1. */
+export function proximaGestao(gestao: string) {
+  const [ano, semestre] = gestao.split(".").map(Number);
+  return semestre === 1 ? `${ano}.2` : `${ano + 1}.1`;
+}

@@ -1,6 +1,7 @@
 import "server-only";
 
 import { exigirPapel } from "@/lib/auth";
+import { compararGestao, gestaoDe } from "@/lib/format";
 import { ADMIN, PAPEIS, type Papel, PUBLICA, RH, TODOS } from "@/lib/papeis";
 import type { Enums } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/server";
@@ -183,9 +184,14 @@ export type Opcao = { id: string; nome: string; detalhe?: string };
 export async function getMembrosOpcoes(): Promise<Opcao[]> {
   await exigirPapel(PUBLICA);
   const supabase = await createClient();
-  const { data, error } = await supabase.from("members").select("id, nome, status").order("nome");
+  const { data, error } = await supabase.from("members").select("id, nome, status, anonimizado").order("nome");
   if (error) falha("members", error);
-  return data.map((m) => ({ id: m.id, nome: m.nome, detalhe: m.status === "alumni" ? "Alumni" : undefined }));
+  // Anonimizados ficam na lista para não sumirem dos relatórios em que já são autores.
+  return data.map((m) => ({
+    id: m.id,
+    nome: m.nome,
+    detalhe: m.anonimizado ? "Anonimizado" : m.status === "alumni" ? "Alumni" : undefined,
+  }));
 }
 
 export async function getNucleosOpcoes(): Promise<Opcao[]> {
@@ -327,11 +333,15 @@ export async function getRegistrosRH(): Promise<RegistroRH[]> {
 
 export type MembroRH = { id: string; nome: string; alumni: boolean };
 
-/** Membros ativos e alumni, para escolher em quem lançar. */
+/** Membros ativos e alumni (sem os anonimizados), para escolher em quem lançar ou a quem ligar um acesso. */
 export async function getMembrosRH(): Promise<MembroRH[]> {
   await exigirPapel(RH);
   const supabase = await createClient();
-  const { data, error } = await supabase.from("members").select("id, nome, status").order("nome");
+  const { data, error } = await supabase
+    .from("members")
+    .select("id, nome, status")
+    .eq("anonimizado", false)
+    .order("nome");
   if (error) falha("members", error);
   return data.map((m) => ({ id: m.id, nome: m.nome, alumni: m.status === "alumni" }));
 }
@@ -377,4 +387,215 @@ export async function getAcessos(): Promise<PessoaComAcesso[]> {
   return [...pessoas.values()]
     .map((p) => ({ ...p, papeis: p.papeis.sort((a, b) => ordem(a.papel) - ordem(b.papel)) }))
     .sort((a, b) => (a.membro ?? a.email).localeCompare(b.membro ?? b.email, "pt-BR"));
+}
+
+// =============================================================================
+// Membros (só Presidente e Diretor de RH)
+// =============================================================================
+export type CargoAdmin = {
+  id: string;
+  gestao: string;
+  cargo: string;
+  diretoriaId: string | null;
+  nucleoId: string | null;
+  diretoria: string | null;
+  nucleo: string | null;
+  ordem: number;
+};
+
+export type MembroAdmin = {
+  id: string;
+  slug: string;
+  nome: string;
+  curso: string | null;
+  status: Enums<"member_status">;
+  anonimizado: boolean;
+  fotoPath: string | null;
+  gestaoTrainee: string | null;
+  linkedin: string | null;
+  email: string | null;
+  telefone: string | null;
+  /** A conta Google já entrou e está ligada a este cadastro. */
+  temConta: boolean;
+  /** E-mail e papéis liberados para este cadastro (Acessos). */
+  acessoEmail: string | null;
+  papeis: Papel[];
+  /** Da gestão mais recente para a mais antiga. */
+  cargos: CargoAdmin[];
+  atual: CargoAdmin | null;
+  relatorios: number;
+};
+
+const COLUNAS_MEMBRO_ADMIN = `id, slug, nome, curso, status, anonimizado, foto_path, gestao_trainee, linkedin,
+  member_private(email_contato, telefone, user_id),
+  access_grants(email, role),
+  report_authors(report_id),
+  member_terms(id, gestao, cargo, ordem, diretoria_id, nucleo_id, diretorias(nome), nucleos(nome))`;
+
+type LinhaMembroAdmin = {
+  id: string;
+  slug: string;
+  nome: string;
+  curso: string | null;
+  status: Enums<"member_status">;
+  anonimizado: boolean;
+  foto_path: string | null;
+  gestao_trainee: string | null;
+  linkedin: string | null;
+  member_private: { email_contato: string | null; telefone: string | null; user_id: string | null } | null;
+  access_grants: { email: string; role: Papel }[];
+  report_authors: { report_id: string }[];
+  member_terms: {
+    id: string;
+    gestao: string;
+    cargo: string;
+    ordem: number;
+    diretoria_id: string | null;
+    nucleo_id: string | null;
+    diretorias: { nome: string } | null;
+    nucleos: { nome: string } | null;
+  }[];
+};
+
+function paraMembroAdmin(m: LinhaMembroAdmin): MembroAdmin {
+  const cargos = [...m.member_terms]
+    .sort((a, b) => compararGestao(b.gestao, a.gestao) || a.ordem - b.ordem)
+    .map((t) => ({
+      id: t.id,
+      gestao: t.gestao,
+      cargo: t.cargo,
+      diretoriaId: t.diretoria_id,
+      nucleoId: t.nucleo_id,
+      diretoria: t.diretorias?.nome ?? null,
+      nucleo: t.nucleos?.nome ?? null,
+      ordem: t.ordem,
+    }));
+  return {
+    id: m.id,
+    slug: m.slug,
+    nome: m.nome,
+    curso: m.curso,
+    status: m.status,
+    anonimizado: m.anonimizado,
+    fotoPath: m.foto_path,
+    gestaoTrainee: m.gestao_trainee,
+    linkedin: m.linkedin,
+    email: m.member_private?.email_contato ?? null,
+    telefone: m.member_private?.telefone ?? null,
+    temConta: Boolean(m.member_private?.user_id),
+    acessoEmail: m.access_grants[0]?.email ?? null,
+    papeis: PAPEIS.filter((p) => m.access_grants.some((g) => g.role === p)),
+    cargos,
+    atual: cargos[0] ?? null,
+    relatorios: m.report_authors.length,
+  };
+}
+
+export async function getMembrosAdmin(): Promise<MembroAdmin[]> {
+  await exigirPapel(ADMIN);
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("members").select(COLUNAS_MEMBRO_ADMIN).order("nome");
+  if (error) falha("members", error);
+  return data.map(paraMembroAdmin);
+}
+
+export async function getMembroAdmin(id: string): Promise<MembroAdmin | null> {
+  await exigirPapel(ADMIN);
+  if (!/^[0-9a-f-]{36}$/.test(id)) return null;
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("members").select(COLUNAS_MEMBRO_ADMIN).eq("id", id).maybeSingle();
+  if (error) falha("members", error);
+  return data ? paraMembroAdmin(data) : null;
+}
+
+export async function getDiretoriasOpcoes(): Promise<Opcao[]> {
+  await exigirPapel(ADMIN);
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("diretorias").select("id, nome").order("ordem");
+  if (error) falha("diretorias", error);
+  return data.map((d) => ({ id: d.id, nome: d.nome }));
+}
+
+// =============================================================================
+// Cadastros de alumni enviados pelo formulário público
+// =============================================================================
+export type EnvioAlumni = {
+  id: string;
+  nome: string;
+  curso: string | null;
+  email: string;
+  linkedin: string | null;
+  gestaoTrainee: string | null;
+  gestoes: string | null;
+  cargos: string | null;
+  mensagem: string | null;
+  /** URL assinada (15 min) da foto no bucket privado `envios`. */
+  fotoUrl: string | null;
+  criadoEm: string;
+};
+
+export async function getEnviosPendentes(): Promise<EnvioAlumni[]> {
+  await exigirPapel(ADMIN);
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("alumni_submissions")
+    .select("id, nome, curso, email, linkedin, gestao_trainee, gestoes, cargos, mensagem, foto_path, created_at")
+    .eq("status", "pendente")
+    .order("created_at");
+  if (error) falha("alumni_submissions", error);
+
+  const paths = data.flatMap((e) => (e.foto_path ? [e.foto_path] : []));
+  const urls = new Map<string, string>();
+  if (paths.length > 0) {
+    const { data: assinadas, error: erroAssinar } = await supabase.storage
+      .from("envios")
+      .createSignedUrls(paths, 15 * 60);
+    if (erroAssinar) console.error("assinar fotos de alumni", erroAssinar);
+    for (const a of assinadas ?? []) if (a.path && a.signedUrl) urls.set(a.path, a.signedUrl);
+  }
+
+  return data.map((e) => ({
+    id: e.id,
+    nome: e.nome,
+    curso: e.curso,
+    email: e.email,
+    linkedin: e.linkedin,
+    gestaoTrainee: e.gestao_trainee,
+    gestoes: e.gestoes,
+    cargos: e.cargos,
+    mensagem: e.mensagem,
+    fotoUrl: e.foto_path ? (urls.get(e.foto_path) ?? null) : null,
+    criadoEm: e.created_at,
+  }));
+}
+
+/** Só a contagem, para o aviso na lista de membros. */
+export async function contarEnviosPendentes(): Promise<number> {
+  await exigirPapel(ADMIN);
+  const supabase = await createClient();
+  const { count, error } = await supabase
+    .from("alumni_submissions")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "pendente");
+  if (error) falha("alumni_submissions", error);
+  return count ?? 0;
+}
+
+/** Nomes de cargo já usados, para sugerir no formulário (evita "Diretor" e "Diretor(a)" misturados). */
+export async function getCargosUsados(): Promise<string[]> {
+  await exigirPapel(ADMIN);
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("member_terms").select("cargo");
+  if (error) falha("member_terms", error);
+  return [...new Set(data.map((t) => t.cargo))].sort((a, b) => a.localeCompare(b, "pt-BR"));
+}
+
+/** Gestão mais recente com cargo cadastrado (a "gestão atual" do site), ou a do calendário. */
+export async function getGestaoAtual(): Promise<string> {
+  await exigirPapel(ADMIN);
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("member_terms").select("gestao");
+  if (error) falha("member_terms", error);
+  const calendario = gestaoDe(new Date());
+  return [calendario, ...data.map((t) => t.gestao)].sort(compararGestao).at(-1) ?? calendario;
 }

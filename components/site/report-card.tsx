@@ -34,7 +34,7 @@ export function ReportCard({
             {r.autores.map((a, i) => (
               <span key={a.slug}>
                 {i > 0 ? (i === r.autores.length - 1 ? " e " : ", ") : null}
-                {hrefAutor ? (
+                {hrefAutor && !a.anonimo ? (
                   <Link href={hrefAutor(a.slug)} scroll={false} className="text-foreground underline-offset-4 hover:text-ink-accent hover:underline">
                     {a.nome}
                   </Link>
