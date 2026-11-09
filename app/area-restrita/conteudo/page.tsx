@@ -17,7 +17,7 @@ export default async function Page() {
     { href: "diretorias", titulo: "Diretorias", qtd: plural(n.diretorias, "diretoria", "diretorias"), onde: "Organograma da página Equipe e cargos dos membros." },
     { href: "parceiros", titulo: "Parceiros", qtd: plural(n.parceiros, "parceiro", "parceiros"), onde: "Rodapé (institucionais) e carrossel de cada núcleo." },
     { href: "historia", titulo: "Nossa História", qtd: plural(n.historia, "seção", "seções"), onde: "Página Nossa História: períodos, textos, fotos e conquistas." },
-    { href: "processo-seletivo", titulo: "Etapas do Processo Seletivo", qtd: plural(n.etapas, "etapa", "etapas"), onde: "Carrossel de etapas da página do Processo Seletivo." },
+    { href: "processo-seletivo", titulo: "Processo Seletivo", qtd: `${n.psAberto ? "Inscrições abertas" : "Inscrições fechadas"} · ${plural(n.etapas, "etapa", "etapas")}`, onde: "Botão Processo Seletivo no topo do site, edital, formulário e etapas." },
     { href: "calendarios", titulo: "Calendários", qtd: plural(n.calendarios, "agenda", "agendas"), onde: "Agendas do Google que aparecem na aba Calendário." },
   ];
 

@@ -731,5 +731,20 @@ export async function getResumoConteudo() {
     contar("ps_steps"),
     contar("calendars"),
   ]);
-  return { nucleos, diretorias, parceiros, historia, etapas, calendarios };
+  const { data: ps, error: erroPs } = await supabase.from("site_settings").select("ps_aberto").maybeSingle();
+  if (erroPs) falha("site_settings", erroPs);
+  return { nucleos, diretorias, parceiros, historia, etapas, calendarios, psAberto: ps?.ps_aberto ?? false };
+}
+
+// =============================================================================
+// Processo Seletivo (abertura, edital e formulário)
+// =============================================================================
+export type PsAdmin = { aberto: boolean; editalPath: string | null; formsUrl: string };
+
+export async function getPsAdmin(): Promise<PsAdmin> {
+  await exigirPapel(ADMIN);
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("site_settings").select("ps_aberto, edital_pdf_path, forms_url").maybeSingle();
+  if (error) falha("site_settings", error);
+  return { aberto: data?.ps_aberto ?? false, editalPath: data?.edital_pdf_path ?? null, formsUrl: data?.forms_url ?? "" };
 }

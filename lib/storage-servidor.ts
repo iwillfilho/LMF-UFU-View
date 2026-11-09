@@ -29,10 +29,10 @@ export async function remover(supabase: Supabase, bucket: Bucket, paths: string[
  * Confere que o arquivo já enviado é mesmo um PDF lendo só os primeiros bytes
  * (Range). Bucket público usa a URL pública; privado, uma URL assinada de 60 s.
  */
-export async function conferirPdf(supabase: Supabase, bucket: "relatorios" | "documentos", path: string) {
+export async function conferirPdf(supabase: Supabase, bucket: "relatorios" | "documentos" | "site", path: string) {
   let url: string | null = null;
-  if (bucket === "relatorios") {
-    url = publicUrl("relatorios", path);
+  if (bucket !== "documentos") {
+    url = publicUrl(bucket, path);
   } else {
     const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, 60);
     if (error) console.error("assinar URL para conferir PDF", error);

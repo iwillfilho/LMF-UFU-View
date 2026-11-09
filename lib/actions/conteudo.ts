@@ -9,7 +9,7 @@ import { exigirPapel } from "@/lib/auth";
 import { ADMIN } from "@/lib/papeis";
 import { TAGS } from "@/lib/queries";
 import { gerarSlug, slugLivre } from "@/lib/slug";
-import { lerImagem, listarPasta, podarPasta, remover, subirImagem } from "@/lib/storage-servidor";
+import { conferirPdf, lerImagem, listarPasta, podarPasta, remover, subirImagem } from "@/lib/storage-servidor";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -479,4 +479,77 @@ export async function salvarCalendario(_anterior: FormState, formData: FormData)
 
   atualizarCache("calendars");
   return { status: "ok", mensagem: id === "" ? `Agenda ${d.nome} adicionada.` : "Alterações salvas." };
+}
+
+// =============================================================================
+// Processo Seletivo: abertura, link do Forms e edital
+// =============================================================================
+const FORMS = /^https:\/\/(docs\.google\.com\/forms\/|forms\.gle\/)/;
+/** Edital no bucket público `site`, sempre com nome novo (evita cache antigo da CDN). */
+const EDITAL = /^ps\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.pdf$/;
+
+/**
+ * Abre ou fecha o PS. Aberto, o botão "Processo Seletivo" aparece no topo do
+ * site e leva ao formulário, por isso abrir exige o link do Google Forms.
+ */
+export async function salvarPs(_anterior: FormState, formData: FormData): Promise<FormState> {
+  await exigirPapel(ADMIN);
+  const aberto = formData.get("aberto") === "on";
+  const forms = String(formData.get("forms_url") ?? "").trim();
+  const valores = { forms_url: forms, aberto: aberto ? "on" : "" };
+  if (forms && (!FORMS.test(forms) || !URL.canParse(forms) || forms.length > 500)) {
+    return invalido({ forms_url: "Use o link do Google Forms (https://docs.google.com/forms/… ou https://forms.gle/…)." }, valores);
+  }
+  if (aberto && !forms) return invalido({ forms_url: "Para abrir o PS, informe o link do formulário." }, valores);
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("site_settings")
+    .update({ ps_aberto: aberto, forms_url: forms || null })
+    .eq("id", true)
+    .select("id");
+  if (error) return { status: "erro", mensagem: mensagemErro(error, "salvar PS"), valores };
+  if (data.length === 0) return { status: "erro", mensagem: "Configuração não encontrada. Recarregue a página." };
+
+  updateTag(TAGS.settings);
+  refresh();
+  return {
+    status: "ok",
+    mensagem: aberto
+      ? "PS aberto: o botão Processo Seletivo já aparece no topo do site."
+      : "PS fechado: o botão Processo Seletivo saiu do site.",
+  };
+}
+
+/** Depois do upload direto do navegador: confere que é PDF, publica e apaga o edital anterior. */
+export async function anexarEdital(path: string): Promise<{ ok: boolean; mensagem: string }> {
+  await exigirPapel(ADMIN);
+  if (!EDITAL.test(path)) return { ok: false, mensagem: "Arquivo inválido." };
+  const supabase = await createClient();
+  if (!(await conferirPdf(supabase, "site", path))) {
+    await remover(supabase, "site", [path]);
+    return { ok: false, mensagem: "O arquivo enviado não é um PDF válido." };
+  }
+  const { error } = await supabase.from("site_settings").update({ edital_pdf_path: path }).eq("id", true);
+  if (error) {
+    await remover(supabase, "site", [path]);
+    return { ok: false, mensagem: mensagemErro(error, "anexar edital") };
+  }
+  await podarPasta(supabase, "site", "ps", [path]);
+
+  updateTag(TAGS.settings);
+  refresh();
+  return { ok: true, mensagem: "Edital publicado." };
+}
+
+export async function removerEdital(): Promise<FormState> {
+  await exigirPapel(ADMIN);
+  const supabase = await createClient();
+  const { error } = await supabase.from("site_settings").update({ edital_pdf_path: null }).eq("id", true);
+  if (error) return { status: "erro", mensagem: mensagemErro(error, "remover edital") };
+  await podarPasta(supabase, "site", "ps", []);
+
+  updateTag(TAGS.settings);
+  refresh();
+  return { status: "ok", mensagem: "Edital removido." };
 }
