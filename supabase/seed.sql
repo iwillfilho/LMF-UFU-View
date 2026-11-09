@@ -2,7 +2,7 @@
 -- Seed de desenvolvimento local (roda em `supabase db reset`).
 -- Não roda em produção: lá os dados entram pela Área Restrita.
 --
--- Conteúdo migrado de legacy/index.html. Gestão atual assumida: 2026.2.
+-- Conteúdo migrado do site estático antigo (legacy/index.html, removido no lançamento). Gestão atual assumida: 2026.2.
 -- O repositório é público: não coloque aqui e-mails reais nem o link do Drive.
 -- =============================================================================
 

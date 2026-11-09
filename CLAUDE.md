@@ -8,10 +8,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Institutional site for LMF UFU (Liga do Mercado Financeiro da UFU), being rewritten from a static HTML site into **Next.js 16 (App Router) + TypeScript + Tailwind v4 + shadcn/ui**. The backend is Supabase and hosting is Vercel. The rewrite lives on `main` of https://github.com/iwillfilho/LMF-UFU-View (MIT license). The history was restarted there; the old `gustavokono/Site-LMF-UFU` repo and its `react-rewrite` branch are no longer a remote. All user-facing content and code comments are in Brazilian Portuguese; keep them in pt-BR.
 
-The approved implementation plan (routes, Supabase schema, RLS roles, phases) is in `~/.claude/plans/analise-as-modifica-es-pedidas-wondrous-dragonfly.md`. The stakeholders' change requests are in `../Alterações site LMF.pdf`, one directory above the repo. Phases 1 (foundation), 2 (database) and 3 (public pages on Supabase) are done. Phase 4 (Google login and the Área Restrita) is **done in code**. Phase 5 (the `/processo-seletivo` page, SEO, a11y/Lighthouse, domain, removing `legacy/`) is next:
+The approved implementation plan (routes, Supabase schema, RLS roles, phases) is in `~/.claude/plans/analise-as-modifica-es-pedidas-wondrous-dragonfly.md`. The stakeholders' change requests are in `../Alterações site LMF.pdf`, one directory above the repo. Phases 1 (foundation), 2 (database) and 3 (public pages on Supabase) are done. Phase 4 (Google login and the Área Restrita) is **done in code**. Phase 5 is **done in code** except the domain: the `/processo-seletivo` page, SEO (OG image, canonical), the remaining QA fixes, the axe/Lighthouse pass, and `legacy/` was removed. Still pending: the production launch (`db:push`, Dashboard setup below) and the domain `lmfufu.com.br`, which is not registered yet. The Phase 5 plan is in `~/.claude/plans/analise-os-erros-aprensentados-calm-mist.md`.
 - Done in code: Google login, `proxy.ts`, the role layer (`lib/auth.ts`), the Área Restrita layout and menu, the Calendário tab (4.2), Publicações (4.3: list, post editor with Tiptap, reports with direct PDF upload; `lib/actions/publicacoes.ts`, `components/area-restrita/`, `app/area-restrita/publicacoes/`) , Documentos (4.4: `lib/actions/documentos.ts`, `app/area-restrita/documentos/`), pontos/strikes (4.5a: `lib/actions/rh.ts`, `app/area-restrita/rh/`, `app/area-restrita/meus-pontos/`), Acessos (4.5b: `lib/actions/acessos.ts`, `app/area-restrita/acessos/`, `components/area-restrita/acessos.tsx`), Membros + alumni approval (4.5c: `lib/actions/membros.ts`, `app/area-restrita/membros/`, `components/area-restrita/{membros,virar-gestao,envios-alumni}.tsx`) and fixed content (4.5d: `lib/actions/conteudo.ts`, `app/area-restrita/conteudo/`, `components/area-restrita/conteudo.tsx`).
 - 4.6, the PS panel, lives in Conteúdo → Processo Seletivo (`components/area-restrita/processo-seletivo.tsx`), together with the PS steps. The plan had put it in the RH tab, but the `rh` role also sees that tab.
-- Still open by design: Ferramenta is a placeholder (`PaginaProvisoria`) until the tool is defined. Production needs `npm run db:push` (migration `membros_anonimizados`) **before** deploying this code, plus the Dashboard setup below.
+- Still open by design: Ferramenta is a placeholder (`PaginaProvisoria`) until the tool is defined. Production needs `npm run db:push` (migrations `membros_anonimizados` and `email_trim`) **before** deploying this code, plus the Dashboard setup below.
 - PS rules: opening the PS requires a Google Forms link (`forms.gle` or `docs.google.com/forms`). Closing keeps the link. The header button (only while open) goes to `/processo-seletivo`, which is always public: open shows steps + edital (react-pdf) + form; closed shows "Inscrições encerradas" + steps. Only a `docs.google.com/forms/…/viewform` link is embedded in an iframe (`?embedded=true`); `forms.gle` and edit links only get the button. The react-pdf viewer (`components/site/edital-pdf-visor.tsx`) is loaded with `next/dynamic` + `ssr: false` (`edital-pdf.tsx`), and `workerSrc` must stay in the same module as `<Document>`. The edital goes from the browser straight to `site/ps/<uuid>.pdf` (up to 20 MB, above the Server Action limit). `anexarEdital` re-checks it with `conferirPdf`, saves `edital_pdf_path` and prunes `site/ps/`. Every change calls `updateTag(TAGS.settings)`. Ferramenta is a placeholder (`PaginaProvisoria`).
 - RH rules: `rh`, `diretor_rh` and `presidente` add records; only `presidente`/`diretor_rh` correct or delete them. Meus pontos filters by the member linked to the account (`member_private.user_id`), because RLS alone would show RH users everyone's records. The default gestão is the current semester in Brasília time (`gestaoDe` in `lib/format.ts`: Jan–Jun → `.1`, Jul–Dec → `.2`).
 - Documentos rules: PDFs live in the private bucket under `documentos/<id>/`; they are never linked directly. `/area-restrita/documentos/[id]/arquivo` checks the session and role on every click and redirects to a 60-second signed URL (`?baixar` forces download). Only `presidente`/`diretor_rh` manage documents and the Drive link (`restricted_settings.drive_url`).
@@ -70,7 +70,7 @@ Git conventions: `origin` is `git@github.com:iwillfilho/LMF-UFU-View.git`, and c
 ```bash
 npm run dev          # dev server (Turbopack)
 npm run build        # production build; also generates route types (LayoutProps/PageProps)
-npm run lint         # ESLint (legacy/ is ignored)
+npm run lint         # ESLint
 npx tsc --noEmit     # typecheck; run `npm run build` or `next typegen` first if LayoutProps is missing
 
 npm run db:start     # local Supabase in Docker (ports 553xx; another project uses 543xx)
@@ -85,7 +85,7 @@ There are no tests inside this repo besides the pgTAP ones. A separate QA suite 
 
 ## Database (supabase/)
 
-- `migrations/` run in order: `base` → `pessoas_e_acessos` → `conteudo_e_area_restrita` → `storage` → `membros_anonimizados`. Never edit an applied migration. Add a new one with `npx supabase migration new <nome>`.
+- `migrations/` run in order: `base` → `pessoas_e_acessos` → `conteudo_e_area_restrita` → `storage` → `membros_anonimizados` → `email_trim`. Never edit an applied migration. Add a new one with `npx supabase migration new <nome>`.
 - Every table has RLS, and the grants are **explicit** because default privileges are revoked. A new table needs `grant ...` + `enable row level security` + policies, or the API returns 42501.
 - Permissions go through `private.*` helpers (`has_role`, `is_admin`, `is_member`, `can_publish`, `can_manage_hr`, `current_member_id`). In policies, wrap them as `(select private.fn())`. The `private` schema is not exposed by the API.
 - Access flow:
@@ -146,7 +146,6 @@ There are no tests inside this repo besides the pgTAP ones. A separate QA suite 
 - Local testing gotcha: kill any old `next start` before starting a new one. A stale server on the same port keeps answering with the old build.
 - `lib/supabase/database.types.ts`: generated types (`npm run db:types`). Don't edit it by hand.
 - `components/ui/`: shadcn components. The `cn` helper comes from the official `cn` npm package (shadcn), re-exported in `lib/utils.ts`.
-- `legacy/`: the old static site, kept for reference until launch. Its asset paths point to `../public/`.
 
 ## Design system (app/globals.css)
 
