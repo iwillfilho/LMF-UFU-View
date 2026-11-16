@@ -2,8 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 
+import { inputClasse } from "@/components/forms/field";
 import { Logo } from "@/components/site/logo";
-import { entrarComGoogle } from "@/lib/actions/auth";
+import { entrarComGoogle, entrarComSenha } from "@/lib/actions/auth";
+import { loginComSenhaAtivo } from "@/lib/login-senha";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Entrar na Área Restrita",
@@ -15,6 +18,7 @@ const ERROS: Record<string, string> = {
   google:
     "Não foi possível entrar com o Google. Se o seu e-mail ainda não foi liberado, fale com o Diretor de RH.",
   falha: "Não foi possível iniciar o login agora. Tente de novo em instantes.",
+  senha: "E-mail ou senha incorretos. Confira e tente de novo; depois de várias tentativas, espere alguns minutos.",
 };
 
 export default function LoginPage({ searchParams }: PageProps<"/login">) {
@@ -53,6 +57,7 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/login">["s
         </p>
       ) : null}
       <BotaoGoogle next={next} />
+      {loginComSenhaAtivo() ? <FormSenha next={next} aberto={params.erro === "senha"} /> : null}
     </>
   );
 }
@@ -69,5 +74,50 @@ function BotaoGoogle({ next }: { next: string }) {
         Entrar com Google
       </button>
     </form>
+  );
+}
+
+/** Acesso provisório por e-mail e senha (só com LOGIN_COM_SENHA=1; ver lib/login-senha.ts). */
+function FormSenha({ next, aberto }: { next: string; aberto: boolean }) {
+  return (
+    <details open={aberto} className="mt-6 text-[0.9375rem]">
+      <summary className="cursor-pointer text-muted-foreground hover:text-foreground">Entrar com e-mail e senha</summary>
+      <form action={entrarComSenha} className="mt-4 space-y-4">
+        <input type="hidden" name="next" value={next} />
+        <div className="grid gap-1.5">
+          <label htmlFor="login-email" className="text-sm">
+            E-mail
+          </label>
+          <input
+            id="login-email"
+            name="email"
+            type="email"
+            autoComplete="username"
+            required
+            className={cn(inputClasse, "border border-input")}
+          />
+        </div>
+        <div className="grid gap-1.5">
+          <label htmlFor="login-senha" className="text-sm">
+            Senha
+          </label>
+          <input
+            id="login-senha"
+            name="senha"
+            type="password"
+            autoComplete="current-password"
+            required
+            className={cn(inputClasse, "border border-input")}
+          />
+        </div>
+        <button
+          type="submit"
+          className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-border px-5 hover:bg-secondary"
+        >
+          Entrar
+        </button>
+        <p className="text-sm text-muted-foreground">Acesso provisório, só para contas criadas pela diretoria.</p>
+      </form>
+    </details>
   );
 }
