@@ -432,13 +432,19 @@ export async function salvarEtapa(_anterior: FormState, formData: FormData): Pro
 // Calendários (aba Calendário da Área Restrita)
 // =============================================================================
 /**
- * Aceita o ID da agenda ("...@group.calendar.google.com") ou o link de
- * incorporação copiado do Google Agenda (de onde sai o parâmetro src).
+ * Aceita o ID da agenda ("...@group.calendar.google.com"), o link de
+ * incorporação (parâmetro src) ou o link de inscrição (parâmetro cid, que é o
+ * ID em base64) copiados do Google Agenda.
  */
 function idDaAgenda(valor: string): string {
   const v = valor.trim();
   if (/^https:\/\/calendar\.google\.com\//.test(v) && URL.canParse(v)) {
-    return new URL(v).searchParams.get("src")?.trim() ?? "";
+    const params = new URL(v).searchParams;
+    const src = params.get("src")?.trim();
+    if (src) return src;
+    const cid = params.get("cid")?.trim() ?? "";
+    // O decodificador base64 do Node aceita também base64url e padding ausente.
+    return cid.includes("@") ? cid : Buffer.from(cid, "base64").toString("utf8").trim();
   }
   return v;
 }

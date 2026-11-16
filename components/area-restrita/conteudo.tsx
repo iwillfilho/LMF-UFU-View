@@ -688,7 +688,7 @@ export function FormCalendario({ calendario }: { calendario?: Calendario }) {
         id={`${p}-google`}
         label="ID da agenda no Google"
         erro={e.google_id}
-        dica="No Google Agenda: Configurações da agenda → Integrar agenda → ID da agenda (ou cole o link de incorporação). A agenda precisa ser pública."
+        dica="No Google Agenda: Configurações da agenda → Integrar agenda → ID da agenda (ou cole o link de incorporação ou de inscrição da agenda). A agenda precisa ser pública."
       >
         <Input
           {...ariaCampo(`${p}-google`, e.google_id, "dica")}
