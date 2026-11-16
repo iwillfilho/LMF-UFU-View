@@ -1,3 +1,4 @@
+import { LockKeyhole } from "lucide-react";
 import Link from "next/link";
 
 import { getParceirosInstitucionais } from "@/lib/queries";
@@ -79,8 +80,13 @@ export async function SiteFooter() {
             </ul>
           </div>
         </div>
-        <div className="mx-auto max-w-7xl px-4 pb-8 text-xs text-muted-foreground sm:px-6 lg:px-10">
-          © {siteConfig.nomeCompleto}
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 pb-8 text-xs text-muted-foreground sm:px-6 lg:px-10">
+          <span>© {siteConfig.nomeCompleto}</span>
+          {/* Sem sessão, o proxy manda para /login; logado, entra direto. Sem prefetch: é rota autenticada. */}
+          <Link href="/area-restrita" prefetch={false} className="inline-flex items-center gap-1.5 hover:text-ink-accent">
+            <LockKeyhole aria-hidden="true" className="size-3.5" />
+            Área restrita
+          </Link>
         </div>
       </div>
     </footer>
