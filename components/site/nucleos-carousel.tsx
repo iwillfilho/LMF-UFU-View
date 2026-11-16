@@ -65,7 +65,7 @@ export function NucleosCarousel({ nucleos }: { nucleos: Nucleo[] }) {
               aria-label={`${i + 1} de ${nucleos.length}: ${n.nome}`}
               className="min-w-0 shrink-0 grow-0 basis-full pr-6 md:basis-[78%] lg:basis-[62%]"
             >
-              <div className="relative h-full overflow-hidden rounded-[2rem_2rem_0.5rem_2rem] border border-border bg-card p-8 sm:p-12">
+              <div data-spot className="relative h-full overflow-hidden rounded-[2rem_2rem_0.5rem_2rem] border border-border bg-card p-8 sm:p-12">
                 {n.area ? <span className="pill bg-secondary text-secondary-foreground">{n.area}</span> : null}
                 <h3 className="mt-8 text-[clamp(4rem,2.5rem+6vw,8rem)] leading-[0.9] text-foreground">
                   {n.nome}
@@ -73,7 +73,7 @@ export function NucleosCarousel({ nucleos }: { nucleos: Nucleo[] }) {
                 <p className="mt-6 max-w-[48ch] text-lg text-muted-foreground">{n.descricao}</p>
                 <Link
                   href={`/nucleos#${n.slug}`}
-                  className="mt-10 inline-flex items-center gap-2 text-[0.9375rem] font-normal text-ink-accent underline-offset-4 hover:underline"
+                  className="mt-10 inline-flex items-center gap-2 text-[0.9375rem] font-normal text-ink-accent link-traco"
                 >
                   Conhecer o núcleo {n.nome}
                 </Link>

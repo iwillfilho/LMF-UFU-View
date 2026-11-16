@@ -41,13 +41,13 @@ export default function Page() {
             <li>
               <a href={contato.instagram} {...linkExterno} className="inline-flex items-center gap-3 hover:text-ink-accent">
                 <InstagramIcon className="size-5 text-ink-accent" aria-hidden /> @lmf.ufu
-                <ArrowUpRight className="size-4 opacity-60" aria-hidden />
+                <ArrowUpRight className="seta size-4 opacity-60" aria-hidden />
               </a>
             </li>
             <li>
               <a href={contato.linkedin} {...linkExterno} className="inline-flex items-center gap-3 hover:text-ink-accent">
                 <LinkedinIcon className="size-5 text-ink-accent" aria-hidden /> LinkedIn
-                <ArrowUpRight className="size-4 opacity-60" aria-hidden />
+                <ArrowUpRight className="seta size-4 opacity-60" aria-hidden />
               </a>
             </li>
           </ul>

@@ -64,7 +64,7 @@ export function ReportFilters({
       <div className="flex items-baseline justify-between gap-4">
         <h2 className="text-3xl">Filtrar</h2>
         {temFiltro ? (
-          <Link href="/relatorios" scroll={false} className="text-sm text-muted-foreground underline-offset-4 hover:text-ink-accent hover:underline">
+          <Link href="/relatorios" scroll={false} className="text-sm text-muted-foreground link-traco hover:text-ink-accent">
             Limpar filtros
           </Link>
         ) : null}

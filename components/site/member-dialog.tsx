@@ -104,9 +104,9 @@ export function MemberDialog({ membros }: { membros: Membro[] }) {
                 href={membro.linkedin}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-[0.9375rem] underline-offset-4 hover:text-ink-accent hover:underline"
+                className="inline-flex items-center gap-1 text-[0.9375rem] link-traco hover:text-ink-accent"
               >
-                LinkedIn <ArrowUpRight className="size-4 opacity-60" aria-hidden />
+                LinkedIn <ArrowUpRight className="seta size-4 opacity-60" aria-hidden />
               </a>
             ) : null}
           </div>

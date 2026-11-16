@@ -51,7 +51,7 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/relatorios
         {lista.length === 0 ? (
           <p className="mt-6 max-w-[62ch] rounded-[1.25rem_1.25rem_0.35rem_1.25rem] border border-dashed border-border p-6 text-muted-foreground">
             Nenhum relatório publicado com esses filtros.{" "}
-            <Link href="/relatorios" className="text-ink-accent underline-offset-4 hover:underline">
+            <Link href="/relatorios" className="text-ink-accent link-traco">
               Ver todos
             </Link>
             .

@@ -11,6 +11,7 @@ export function PostCard({ post, destaque = false }: { post: PostResumo; destaqu
 
   return (
     <article
+      data-spot
       className={cn(
         "group relative flex h-full flex-col overflow-hidden rounded-[1.75rem_1.75rem_0.5rem_1.75rem] border border-border bg-card",
         destaque && "md:flex-row",

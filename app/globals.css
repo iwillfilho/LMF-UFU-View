@@ -57,6 +57,11 @@
   /* Brilho radial da marca (gradiente "Galaxy") */
   --glow-core: rgb(196 85 237 / 0.35);
   --glow-edge: rgb(140 20 185 / 0.12);
+  /* Núcleo quente do brilho do hero e luz que segue o cursor (multiply: só escurece). */
+  --glow-quente: rgb(196 85 237 / 0.3);
+  --luz-core: rgb(196 85 237 / 0.28);
+  --luz-meio: rgb(196 85 237 / 0.1);
+  --luz-mistura: multiply;
 
   --chart-1: #8c14b9;
   --chart-2: #c455ed;
@@ -101,6 +106,11 @@
 
   --glow-core: rgb(140 20 185 / 0.55);
   --glow-edge: rgb(63 9 83 / 0.35);
+  /* screen: só clareia, então o texto claro continua legível sobre a luz. */
+  --glow-quente: rgb(196 85 237 / 0.45);
+  --luz-core: rgb(196 85 237 / 0.36);
+  --luz-meio: rgb(140 20 185 / 0.17);
+  --luz-mistura: screen;
 
   --sidebar: #0f0317;
   --sidebar-foreground: #f3ecf7;
@@ -256,5 +266,274 @@
   .animate-rise,
   .animate-glow-in {
     animation: none;
+  }
+}
+
+/* ==========================================================
+   EDITORIAL VIVO
+   Interações que partem dos dois elementos da marca (o brilho
+   e a pílula). Tudo em CSS; o que depende do cursor recebe as
+   coordenadas de components/site/ponteiro.tsx.
+========================================================== */
+
+/* Brilho vivo: --gx/--gy (de -1 a 1) vêm do cursor. Usa `translate`, que não
+   disputa com o `transform` da entrada do hero. */
+.glow-vivo {
+  translate: calc(var(--gx, 0) * 7%) calc(var(--gy, 0) * 7%);
+}
+@keyframes deriva {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 2.5% -3%;
+  }
+}
+.glow-deriva {
+  animation: deriva 26s ease-in-out infinite;
+}
+
+/* Respiração: usa `scale`, separado do `transform`/`translate` da posição. */
+@keyframes respira {
+  0%,
+  100% {
+    scale: 1;
+    opacity: 0.85;
+  }
+  50% {
+    scale: 1.08;
+    opacity: 1;
+  }
+}
+
+/* Núcleo quente do brilho do hero/PageIntro, no mesmo ponto do .galaxy-glow. */
+.glow-nucleo {
+  background: radial-gradient(28% 34% at 72% 38%, var(--glow-quente), transparent 70%);
+  transform-origin: 72% 38%;
+  animation: respira 6s ease-in-out infinite;
+}
+
+/* Luz que segue o cursor pelo site público inteiro (components/site/ponteiro.tsx).
+   A caixa externa cobre a tela e corta o que passa da borda (no celular, um
+   elemento fixo vazando para fora muda a largura da viewport). Fica abaixo do
+   header, dos diálogos e do menu mobile (z-50). */
+.luz-cursor {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  overflow: hidden;
+  pointer-events: none;
+  mix-blend-mode: var(--luz-mistura);
+  opacity: 0;
+  transition: opacity 0.6s;
+}
+.luz-cursor[data-ativa] {
+  opacity: 1;
+}
+.luz-cursor > span {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 52rem;
+  height: 52rem;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--luz-core), var(--luz-meio) 40%, transparent);
+  transform: translate3d(calc(var(--lx, -100vw) - 50%), calc(var(--ly, -100vh) - 50%), 0);
+  will-change: transform;
+  animation: respira 6s ease-in-out infinite;
+}
+/* Sem cursor (celular, tablet): brilho parado no canto, derivando devagar. */
+@media (hover: none) {
+  .luz-cursor {
+    opacity: 0.7;
+  }
+  .luz-cursor > span {
+    top: 12vh;
+    left: 82vw;
+    width: 28rem;
+    height: 28rem;
+    transform: translate(-50%, -50%);
+    animation:
+      respira 6s ease-in-out infinite,
+      deriva 26s ease-in-out infinite;
+  }
+}
+
+/* Sublinhado que se desenha da esquerda (links de texto). */
+.link-traco {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 0% 1px;
+  padding-bottom: 0.15em;
+  transition:
+    background-size 0.4s cubic-bezier(0.2, 0.7, 0.1, 1),
+    color 0.15s;
+}
+.link-traco:hover,
+.link-traco:focus-visible {
+  background-size: 100% 1px;
+}
+
+/* Seta de link externo: avança na diagonal no hover do link. */
+.seta {
+  transition: translate 0.25s cubic-bezier(0.2, 0.7, 0.1, 1);
+}
+a:hover .seta,
+a:focus-visible .seta {
+  translate: 2px -2px;
+}
+
+/* Pílulas clicáveis afundam um pouco ao pressionar. */
+.pill:is(a, button):active {
+  scale: 0.98;
+}
+
+/* Indicador do menu: uma pílula só, que desliza até o item ativo.
+   A transição só liga depois da primeira medida (data-pronto). */
+.nav-indicador {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  pointer-events: none;
+  border-radius: 999px 999px 0.35rem 999px;
+  background: var(--secondary);
+}
+[data-pronto] > .nav-indicador {
+  transition:
+    transform 0.5s cubic-bezier(0.3, 0.7, 0.1, 1),
+    width 0.5s cubic-bezier(0.3, 0.7, 0.1, 1),
+    opacity 0.2s;
+}
+
+/* Borda do cartão clareia perto do cursor (--mx/--my em px). */
+@media (hover: hover) {
+  [data-spot] {
+    position: relative;
+  }
+  [data-spot]::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+    padding: 1px;
+    background: radial-gradient(18rem circle at var(--mx, 50%) var(--my, 50%), var(--ink-accent), transparent 70%);
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#000 0 0) content-box exclude,
+      linear-gradient(#000 0 0);
+    opacity: 0;
+    transition: opacity 0.35s;
+    pointer-events: none;
+  }
+  [data-spot]:hover::before {
+    opacity: 1;
+  }
+}
+
+/* Linha do tempo (Nossa História): trilho entre as duas colunas, só no desktop. */
+@media (min-width: 64rem) {
+  .linha-tempo {
+    position: relative;
+  }
+  .linha-tempo::before,
+  .linha-tempo::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    /* padding lateral da lista + coluna do período + metade do vão */
+    left: calc(2.5rem + 14rem + 1.75rem);
+    width: 1px;
+  }
+  .linha-tempo::before {
+    background: var(--border);
+  }
+  .linha-tempo::after {
+    width: 2px;
+    margin-left: -0.5px;
+    background: var(--ink-accent);
+    transform-origin: top;
+    transform: scaleY(0);
+  }
+  /* Marco onde cada período encontra o trilho. */
+  .linha-tempo > li {
+    position: relative;
+  }
+  .linha-tempo > li::before {
+    content: "";
+    position: absolute;
+    top: -0.3125rem;
+    left: calc(14rem + 1.75rem - 0.25rem);
+    z-index: 1;
+    width: calc(0.5rem + 1px);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: 1px solid var(--ink-accent);
+    background: var(--background);
+  }
+}
+
+@keyframes acender {
+  to {
+    background-position: 0 0;
+  }
+}
+@keyframes preencher {
+  to {
+    transform: scaleY(1);
+  }
+}
+
+/* Efeitos ligados ao scroll: só onde o navegador suporta e o visitante não
+   pediu movimento reduzido. Fora disso o texto e o trilho ficam estáticos. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
+    /* Texto que acende: como o <span> é inline, o gradiente percorre o texto
+       linha a linha. As duas cores passam AA sobre o fundo. */
+    .texto-acende {
+      color: transparent;
+      background-image: linear-gradient(to right, var(--foreground) 46%, var(--muted-foreground) 54%);
+      background-size: 220% 100%;
+      background-position: 100% 0;
+      -webkit-background-clip: text;
+      background-clip: text;
+      animation: acender linear both;
+      animation-timeline: view();
+      animation-range: cover 12% cover 48%;
+    }
+  }
+  @media (prefers-reduced-motion: no-preference) and (min-width: 64rem) {
+    /* O preenchimento acompanha o meio da tela ao longo da lista. */
+    .linha-tempo::after {
+      animation: preencher linear both;
+      animation-timeline: view();
+      animation-range: entry 50% exit 50%;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glow-deriva,
+  .glow-nucleo,
+  .luz-cursor > span {
+    animation: none;
+  }
+  /* A luz que segue o cursor é movimento; com o cursor, ela some. */
+  @media (hover: hover) {
+    .luz-cursor {
+      display: none;
+    }
+  }
+  .link-traco,
+  .seta,
+  [data-pronto] > .nav-indicador {
+    transition: none;
   }
 }

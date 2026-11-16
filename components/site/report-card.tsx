@@ -19,7 +19,7 @@ export function ReportCard({
   const meta = [r.nucleo?.nome, r.setor].filter(Boolean).join(" · ");
 
   return (
-    <article className="flex h-full flex-col rounded-[1.75rem_1.75rem_0.5rem_1.75rem] border border-border bg-card p-6 sm:p-7">
+    <article data-spot className="flex h-full flex-col rounded-[1.75rem_1.75rem_0.5rem_1.75rem] border border-border bg-card p-6 sm:p-7">
       <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
         <span className="pill bg-secondary text-secondary-foreground">{TIPO_RELATORIO_LABEL[r.tipo]}</span>
         {meta ? <span>{meta}</span> : null}
@@ -35,7 +35,7 @@ export function ReportCard({
               <span key={a.slug}>
                 {i > 0 ? (i === r.autores.length - 1 ? " e " : ", ") : null}
                 {hrefAutor && !a.anonimo ? (
-                  <Link href={hrefAutor(a.slug)} scroll={false} className="text-foreground underline-offset-4 hover:text-ink-accent hover:underline">
+                  <Link href={hrefAutor(a.slug)} scroll={false} className="text-foreground link-traco hover:text-ink-accent">
                     {a.nome}
                   </Link>
                 ) : (
@@ -58,10 +58,10 @@ export function ReportCard({
               href={r.pdfUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-[0.9375rem] text-ink-accent underline-offset-4 hover:underline"
+              className="inline-flex items-center gap-1 text-[0.9375rem] text-ink-accent link-traco"
             >
               Ler relatório <span className="sr-only">{r.titulo} (PDF, abre em nova aba)</span>
-              <ArrowUpRight className="size-4" aria-hidden />
+              <ArrowUpRight className="seta size-4" aria-hidden />
             </a>
           ) : null}
         </div>

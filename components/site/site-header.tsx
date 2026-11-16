@@ -3,7 +3,7 @@
 import { LockKeyhole, Menu } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 
 import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { mainNav } from "@/lib/site-config";
@@ -47,6 +47,40 @@ function PsButton({
 export function SiteHeader({ psAberto }: { psAberto: boolean }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const navRef = useRef<HTMLElement>(null);
+
+  // Pílula do item ativo: uma só, que desliza de um item para o outro. A posição
+  // é medida no DOM (as larguras mudam com a fonte e com o tamanho da janela).
+  useLayoutEffect(() => {
+    const nav = navRef.current;
+    const indicador = nav?.querySelector<HTMLElement>(".nav-indicador");
+    if (!nav || !indicador) return;
+
+    const medir = () => {
+      const ativo = nav.querySelector<HTMLElement>('a[aria-current="page"]');
+      const base = nav.getBoundingClientRect();
+      const r = ativo?.getBoundingClientRect();
+      if (!r || r.width === 0) {
+        // Página fora do menu (ou menu escondido no celular): a pílula some onde está.
+        indicador.style.opacity = "0";
+        return;
+      }
+      indicador.style.transform = `translate(${r.left - base.left}px, ${r.top - base.top}px)`;
+      indicador.style.width = `${r.width}px`;
+      indicador.style.height = `${r.height}px`;
+      indicador.style.opacity = "1";
+    };
+
+    medir();
+    // A transição só liga depois da primeira posição, para a pílula não vir deslizando do canto.
+    const quadro = requestAnimationFrame(() => nav.setAttribute("data-pronto", ""));
+    const observador = new ResizeObserver(medir);
+    observador.observe(nav);
+    return () => {
+      cancelAnimationFrame(quadro);
+      observador.disconnect();
+    };
+  }, [pathname]);
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-border/60 bg-background/85 backdrop-blur-md supports-[backdrop-filter]:bg-background/70">
@@ -55,8 +89,9 @@ export function SiteHeader({ psAberto }: { psAberto: boolean }) {
           <Logo className="h-9 sm:h-10" titulo="" />
         </Link>
 
-        <nav aria-label="Principal" className="ml-auto hidden xl:block">
-          <ul className="flex items-center gap-1">
+        <nav ref={navRef} aria-label="Principal" className="group/nav relative ml-auto hidden xl:block">
+          <span aria-hidden className="nav-indicador" />
+          <ul className="relative flex items-center gap-1">
             {mainNav.map((item) => {
               const active = isActive(pathname, item.href);
               return (
@@ -66,8 +101,9 @@ export function SiteHeader({ psAberto }: { psAberto: boolean }) {
                     aria-current={active ? "page" : undefined}
                     className={cn(
                       "pill text-[0.875rem] transition-colors",
+                      // Até a pílula ser medida, o próprio link carrega o fundo (sem piscar na carga).
                       active
-                        ? "bg-secondary text-foreground"
+                        ? "bg-secondary text-foreground group-data-[pronto]/nav:bg-transparent"
                         : "text-muted-foreground hover:text-foreground",
                     )}
                   >

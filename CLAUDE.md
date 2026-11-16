@@ -160,6 +160,12 @@ There are no tests inside this repo besides the pgTAP ones. A separate QA suite 
   - `.brand-mask` (via `components/site/logo.tsx`): the logo is a CSS mask so it takes on `currentColor` in both themes.
   - `.galaxy-glow`: the brand radial gradient. It's the one strong decoration; don't scatter it around.
 - Type scale: `text-display` / `text-title` / `text-quote`. Headings use Instrument Serif at weight 400. Italic goes on whole lines, never on a single word.
-- Motion: only the hero entrance (`animate-rise`, `animate-glow-in`), and it respects `prefers-reduced-motion`. Avoid per-section fade-ins.
+- Motion ("Editorial vivo", public site only): CSS first, and the `motion` package stays unused. Everything respects `prefers-reduced-motion`, and nothing starts at opacity 0 except the hero entrance. Avoid per-section fade-ins.
+  - Hero entrance: `animate-rise`, `animate-glow-in`.
+  - `GlowVivo` (`components/site/ponteiro.tsx`): the galaxy glow drifts, follows the mouse and has a hotter core that "breathes" (`.glow-nucleo`, `--glow-quente`). Use it instead of a bare `.galaxy-glow` in the hero and in `PageIntro`.
+  - Cursor light (`.luz-cursor`, rendered by `Ponteiro` in the public layout): a fixed lilac light that trails the mouse on every page, at z-40 (under the header, dialogs and mobile menu). It blends with `--luz-mistura` (`screen` on dark, `multiply` on light), so it never lowers text contrast. Without a mouse (`hover: none`) it sits still in the top-right corner and drifts; with reduced motion it is hidden on desktop and static on mobile.
+  - Nav pill: one `.nav-indicador` that slides to the active item; `site-header.tsx` measures the active link and writes the position straight to the DOM.
+  - `.texto-acende` and the `.linha-tempo` fill are scroll-driven (`animation-timeline: view()` inside `@supports`). Without support they are static.
+  - Hover details: `.link-traco` (drawn underline, replaces `hover:underline`), `.seta` (arrow nudge), and `data-spot` on cards (border lights up near the cursor; `Ponteiro` in the public layout sets `--mx`/`--my`).
 - Lucide v1 has no brand icons. Instagram and LinkedIn are in `components/site/social-icons.tsx`.
 - Logo variants (trimmed PNGs) live in `public/marca/`. `app/icon.png` and `app/apple-icon.png` are the favicons.

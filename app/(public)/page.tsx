@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { ContactForm } from "@/components/forms/contact-form";
 import { NucleosCarousel } from "@/components/site/nucleos-carousel";
+import { GlowVivo } from "@/components/site/ponteiro";
 import { PostCard } from "@/components/site/post-card";
 import { ReportCard } from "@/components/site/report-card";
 import { InstagramIcon as Instagram, LinkedinIcon as Linkedin } from "@/components/site/social-icons";
@@ -28,10 +29,7 @@ export default async function HomePage() {
     <>
       {/* HERO: slogan da marca + resumo de "Nossa história" + CTA para a equipe */}
       <section aria-labelledby="hero-titulo" className="relative isolate overflow-hidden">
-        <div
-          aria-hidden
-          className="galaxy-glow animate-glow-in pointer-events-none absolute inset-x-[-30%] top-[-30%] -z-10 h-[150%] sm:inset-x-[-10%]"
-        />
+        <GlowVivo className="animate-glow-in inset-x-[-30%] top-[-30%] -z-10 h-[150%] sm:inset-x-[-10%]" />
         <div className="mx-auto max-w-7xl px-4 pt-16 pb-24 sm:px-6 sm:pt-24 lg:px-10 lg:pt-28 lg:pb-32">
           <h1 id="hero-titulo" className="text-display tracking-[-0.01em]">
             <span className="animate-rise block">Criada por estudantes,</span>
@@ -57,7 +55,7 @@ export default async function HomePage() {
               >
                 Conheça nossa equipe
               </Link>
-              <Link href="/nossa-historia" className="text-[0.9375rem] underline-offset-4 hover:text-ink-accent hover:underline">
+              <Link href="/nossa-historia" className="text-[0.9375rem] link-traco hover:text-ink-accent">
                 Ler a história completa
               </Link>
             </div>
@@ -69,7 +67,9 @@ export default async function HomePage() {
       <section id="conheca-a-lmf" aria-labelledby="quem-somos-titulo" className="border-t border-border">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 py-20 sm:px-6 md:grid-cols-[16rem_1fr] lg:px-10 lg:py-28">
           <SectionTitle id="quem-somos-titulo">Quem somos</SectionTitle>
-          <p className="max-w-[56ch] text-2xl leading-[1.5] font-light text-foreground/90 md:pt-3">{quemSomos}</p>
+          <p className="max-w-[56ch] text-2xl leading-[1.5] font-light text-foreground/90 md:pt-3">
+            <span className="texto-acende">{quemSomos}</span>
+          </p>
         </div>
       </section>
 
@@ -81,7 +81,9 @@ export default async function HomePage() {
           </h2>
           <figure>
             <figcaption className="text-sm text-muted-foreground">Visão</figcaption>
-            <blockquote className="text-quote mt-4 max-w-[26ch] font-serif italic">{mvv.visao}</blockquote>
+            <blockquote className="text-quote mt-4 max-w-[26ch] font-serif italic">
+              <span className="texto-acende">{mvv.visao}</span>
+            </blockquote>
           </figure>
           <div className="mt-16 grid gap-12 md:grid-cols-2 md:gap-16">
             <div>
@@ -101,7 +103,7 @@ export default async function HomePage() {
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-10 lg:py-28">
           <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
             <SectionTitle id="nucleos-titulo">Nossos núcleos</SectionTitle>
-            <Link href="/nucleos" className="text-[0.9375rem] underline-offset-4 hover:text-ink-accent hover:underline">
+            <Link href="/nucleos" className="text-[0.9375rem] link-traco hover:text-ink-accent">
               Ver todos os núcleos
             </Link>
           </div>
@@ -116,10 +118,10 @@ export default async function HomePage() {
             <SectionTitle id="posts-titulo">Publicações recentes</SectionTitle>
             {publicacoes.length > 0 ? (
               <div className="flex gap-6 text-[0.9375rem]">
-                <Link href="/eventos" className="underline-offset-4 hover:text-ink-accent hover:underline">
+                <Link href="/eventos" className="link-traco hover:text-ink-accent">
                   Eventos
                 </Link>
-                <Link href="/relatorios" className="underline-offset-4 hover:text-ink-accent hover:underline">
+                <Link href="/relatorios" className="link-traco hover:text-ink-accent">
                   Relatórios
                 </Link>
               </div>
@@ -129,7 +131,7 @@ export default async function HomePage() {
             <p className="max-w-[56ch] text-muted-foreground">
               Eventos, palestras, viagens e relatórios aparecem aqui assim que forem publicados. Enquanto isso, acompanhe a
               liga no{" "}
-              <a href={contato.instagram} {...linkExterno} className="text-ink-accent underline-offset-4 hover:underline">
+              <a href={contato.instagram} {...linkExterno} className="text-ink-accent link-traco">
                 Instagram
               </a>
               .
@@ -165,13 +167,13 @@ export default async function HomePage() {
             <li>
               <a href={contato.instagram} {...linkExterno} className="inline-flex items-center gap-3 hover:text-lilac">
                 <Instagram className="size-5" aria-hidden /> @lmf.ufu
-                <ArrowUpRight className="size-4 opacity-60" aria-hidden />
+                <ArrowUpRight className="seta size-4 opacity-60" aria-hidden />
               </a>
             </li>
             <li>
               <a href={contato.linkedin} {...linkExterno} className="inline-flex items-center gap-3 hover:text-lilac">
                 <Linkedin className="size-5" aria-hidden /> LinkedIn
-                <ArrowUpRight className="size-4 opacity-60" aria-hidden />
+                <ArrowUpRight className="seta size-4 opacity-60" aria-hidden />
               </a>
             </li>
             </ul>

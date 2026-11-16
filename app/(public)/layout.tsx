@@ -1,3 +1,4 @@
+import { Ponteiro } from "@/components/site/ponteiro";
 import { SiteFooter } from "@/components/site/site-footer";
 import { SiteHeader } from "@/components/site/site-header";
 import { getSiteSettings } from "@/lib/queries";
@@ -19,6 +20,7 @@ export default async function PublicLayout({ children }: { children: React.React
         {children}
       </main>
       <SiteFooter />
+      <Ponteiro />
     </>
   );
 }

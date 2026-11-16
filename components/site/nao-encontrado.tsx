@@ -19,7 +19,7 @@ export function NaoEncontrado() {
           >
             Ir para o início
           </Link>
-          <Link href="/contato" className="text-[0.9375rem] underline-offset-4 hover:text-ink-accent hover:underline">
+          <Link href="/contato" className="text-[0.9375rem] link-traco hover:text-ink-accent">
             Avisar a liga sobre o link quebrado
           </Link>
         </div>

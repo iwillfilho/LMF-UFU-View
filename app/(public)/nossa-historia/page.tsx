@@ -24,10 +24,10 @@ export default async function Page() {
           </p>
         </div>
       ) : (
-        <ol className="mx-auto max-w-7xl px-4 pb-8 sm:px-6 lg:px-10">
+        <ol className="linha-tempo mx-auto max-w-7xl px-4 pb-8 sm:px-6 lg:px-10">
           {secoes.map((s) => (
             <li key={s.id} className="grid gap-8 border-t border-border py-16 lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-14">
-              <p className="font-serif text-5xl text-ink-accent italic">{s.periodo}</p>
+              <p className="font-serif text-5xl text-ink-accent italic lg:sticky lg:top-28 lg:self-start">{s.periodo}</p>
               <section aria-labelledby={`historia-${s.id}`}>
                 <h2 id={`historia-${s.id}`} className="text-4xl">
                   {s.titulo}
@@ -51,7 +51,13 @@ export default async function Page() {
                   <ul className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-3">
                     {s.fotos.map((src) => (
                       <li key={src} className="relative aspect-[4/3] overflow-hidden rounded-[1.25rem_1.25rem_0.35rem_1.25rem]">
-                        <Image src={src} alt="" fill sizes="(min-width: 768px) 25vw, 50vw" className="object-cover" />
+                        <Image
+                          src={src}
+                          alt=""
+                          fill
+                          sizes="(min-width: 768px) 25vw, 50vw"
+                          className="object-cover transition-transform duration-500 hover:scale-[1.03] motion-reduce:transition-none"
+                        />
                       </li>
                     ))}
                   </ul>

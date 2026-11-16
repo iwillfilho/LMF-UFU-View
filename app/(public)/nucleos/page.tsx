@@ -106,8 +106,8 @@ function SecaoNucleo({ nucleo, equipe, relatorios, primeira }: { nucleo: Nucleo;
           ) : (
             <p className="text-muted-foreground">
               A equipe deste núcleo aparece aqui assim que for cadastrada.{" "}
-              <Link href="/equipe" className="inline-flex items-center gap-1 text-ink-accent underline-offset-4 hover:underline">
-                Ver a equipe <ArrowUpRight className="size-4" aria-hidden />
+              <Link href="/equipe" className="inline-flex items-center gap-1 text-ink-accent link-traco">
+                Ver a equipe <ArrowUpRight className="seta size-4" aria-hidden />
               </Link>
             </p>
           )}
