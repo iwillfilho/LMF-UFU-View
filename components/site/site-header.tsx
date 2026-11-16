@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu } from "lucide-react";
+import { LockKeyhole, Menu } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -81,6 +81,16 @@ export function SiteHeader({ psAberto }: { psAberto: boolean }) {
 
         <div className="ml-auto flex items-center gap-2 xl:ml-2">
           <PsButton visivel={psAberto} ativo={pathname === "/processo-seletivo"} className="hidden sm:inline-flex" />
+          {/* Sem sessão, o proxy manda para /login; logado, entra direto. Sem prefetch: é rota autenticada. */}
+          <Link
+            href="/area-restrita"
+            prefetch={false}
+            aria-label="Área restrita"
+            title="Área restrita"
+            className="inline-flex size-10 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          >
+            <LockKeyhole className="size-[1.15rem]" aria-hidden />
+          </Link>
           <ThemeToggle />
 
           <Sheet open={open} onOpenChange={setOpen}>
