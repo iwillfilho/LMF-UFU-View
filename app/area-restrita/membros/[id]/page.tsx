@@ -50,8 +50,15 @@ export default async function Page({ params, searchParams }: PageProps<"/area-re
       <Voltar href="/area-restrita/membros" label="Membros" />
       <h1 className="text-title mt-6">{membro.nome}</h1>
       <p className="mt-2 text-muted-foreground">
-        {membro.anonimizado ? "Anonimizado" : membro.status === "ativo" ? "Membro ativo" : "Alumni"}
-        {membro.status === "ativo" || !membro.anonimizado ? (
+        {membro.anonimizado
+          ? "Anonimizado"
+          : membro.trainee
+            ? `Trainee ${membro.gestaoTrainee}`
+            : membro.status === "ativo"
+              ? "Membro ativo"
+              : "Alumni"}
+        {/* Trainee ainda não tem cargo, então não aparece em /equipe. */}
+        {!membro.trainee && (membro.status === "ativo" || !membro.anonimizado) ? (
           <>
             {" · "}
             <Link

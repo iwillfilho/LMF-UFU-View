@@ -410,7 +410,7 @@ isOneToOne: false
             [_ in never]: never
           }
           Enums: {
-            "app_role": "presidente"|"diretor_rh"|"rh"|"editor"|"membro","document_categoria": "estatuto"|"regimento"|"auxiliar","hr_tipo": "ponto"|"strike","member_status": "ativo"|"alumni","post_categoria": "evento"|"palestra"|"viagem"|"smf"|"competicao","report_tipo": "tese"|"iniciacao","submission_status": "pendente"|"aprovado"|"rejeitado"
+            "app_role": "presidente"|"diretor_rh"|"rh"|"editor"|"membro"|"trainee","document_categoria": "estatuto"|"regimento"|"auxiliar","hr_tipo": "ponto"|"strike","member_status": "ativo"|"alumni","post_categoria": "evento"|"palestra"|"viagem"|"smf"|"competicao","report_tipo": "tese"|"iniciacao","submission_status": "pendente"|"aprovado"|"rejeitado"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -530,7 +530,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "app_role": ["presidente", "diretor_rh", "rh", "editor", "membro"],"document_categoria": ["estatuto", "regimento", "auxiliar"],"hr_tipo": ["ponto", "strike"],"member_status": ["ativo", "alumni"],"post_categoria": ["evento", "palestra", "viagem", "smf", "competicao"],"report_tipo": ["tese", "iniciacao"],"submission_status": ["pendente", "aprovado", "rejeitado"]
+            "app_role": ["presidente", "diretor_rh", "rh", "editor", "membro", "trainee"],"document_categoria": ["estatuto", "regimento", "auxiliar"],"hr_tipo": ["ponto", "strike"],"member_status": ["ativo", "alumni"],"post_categoria": ["evento", "palestra", "viagem", "smf", "competicao"],"report_tipo": ["tese", "iniciacao"],"submission_status": ["pendente", "aprovado", "rejeitado"]
           }
         }
 } as const

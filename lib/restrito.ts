@@ -412,6 +412,8 @@ export type MembroAdmin = {
   anonimizado: boolean;
   fotoPath: string | null;
   gestaoTrainee: string | null;
+  /** Ativo, com gestão de trainee e ainda sem cargo: está no trainee e não aparece em /equipe. */
+  trainee: boolean;
   linkedin: string | null;
   email: string | null;
   telefone: string | null;
@@ -479,6 +481,7 @@ function paraMembroAdmin(m: LinhaMembroAdmin): MembroAdmin {
     anonimizado: m.anonimizado,
     fotoPath: m.foto_path,
     gestaoTrainee: m.gestao_trainee,
+    trainee: m.status === "ativo" && Boolean(m.gestao_trainee) && cargos.length === 0,
     linkedin: m.linkedin,
     email: m.member_private?.email_contato ?? null,
     telefone: m.member_private?.telefone ?? null,

@@ -223,7 +223,7 @@ export default async function Page({ searchParams }: PageProps<"/area-restrita/m
                     )}
                   </td>
                   <td className="px-4 py-2">
-                    {m.anonimizado ? "Anonimizado" : m.status === "ativo" ? "Ativo" : "Alumni"}
+                    {m.anonimizado ? "Anonimizado" : m.trainee ? "Trainee" : m.status === "ativo" ? "Ativo" : "Alumni"}
                   </td>
                   <td className="py-2 pl-4 text-sm">
                     {m.papeis.length > 0 ? (

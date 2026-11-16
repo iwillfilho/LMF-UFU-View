@@ -9,10 +9,11 @@
 --   r  rh@teste.local       rh
 --   m  membro@teste.local   membro (vinculado a Gustavo Kono)
 --   s  estranho@...         conta sem nenhum acesso
+--   t  trainee@teste.local  trainee (cadastro criado na seção do trainee)
 -- =============================================================================
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(66);
+select plan(78);
 
 -- Liberação antes de a conta existir (caminho normal).
 insert into public.access_grants (email, role) values ('rh@teste.local', 'rh');
@@ -163,6 +164,52 @@ select is_empty($$update public.hr_records set valor = 50 returning id$$,
 set local request.jwt.claim.sub = 'a0000000-0000-0000-0000-000000000005';
 select results_eq($$select tipo::text from public.hr_records$$, array['ponto'],
   'membro vê só os próprios pontos/strikes');
+select isnt_empty(
+  $$select 1 from public.member_private mp join public.members m on m.id = mp.member_id
+    where m.slug = 'julia-kasahara'$$,
+  'membro efetivo vê os contatos dos outros membros');
+
+-- -----------------------------------------------------------------------------
+-- Trainee (cadastro criado aqui para não mudar as contagens públicas acima)
+-- -----------------------------------------------------------------------------
+reset role;
+insert into public.members (slug, nome, gestao_trainee) values ('trainee-teste', 'Trainee Teste', '2026.2');
+insert into public.access_grants (email, role, member_id)
+  select 'trainee@teste.local', 'trainee', id from public.members where slug = 'trainee-teste';
+insert into auth.users (id, email) values ('a0000000-0000-0000-0000-000000000007', 'trainee@teste.local');
+insert into public.hr_records (member_id, tipo, motivo, gestao, created_by)
+  select id, 'strike', 'Atraso na entrega do case', '2026.2', 'a0000000-0000-0000-0000-000000000004'
+  from public.members where slug = 'trainee-teste';
+set local role authenticated;
+set local request.jwt.claim.sub = 'a0000000-0000-0000-0000-000000000007';
+
+select results_eq(
+  $$select role::text from public.user_roles where user_id = 'a0000000-0000-0000-0000-000000000007'$$,
+  array['trainee'],
+  'primeiro login do trainee recebe o papel trainee');
+select results_eq($$select count(*)::int from public.calendars$$, array[1],
+  'trainee lê os calendários');
+select results_eq($$select count(*)::int from public.documents$$, array[1],
+  'trainee lê a lista de documentos');
+select results_eq($$select count(*)::int from public.restricted_settings$$, array[1],
+  'trainee lê o link do Drive');
+select results_eq(
+  $$select m.slug::text from public.member_private mp join public.members m on m.id = mp.member_id$$,
+  array['trainee-teste'],
+  'trainee vê só a própria linha de contatos');
+select results_eq($$select tipo::text from public.hr_records$$, array['strike'],
+  'trainee vê só os próprios pontos/strikes');
+select throws_ok(
+  $$insert into public.hr_records (member_id, tipo, motivo, gestao)
+    select id, 'ponto', 'autoatribuído', '2026.2' from public.members where slug = 'trainee-teste'$$,
+  '42501', null, 'trainee não lança pontos');
+select throws_ok(
+  $$insert into public.posts (slug, titulo, categoria) values ('post-trainee', 'Post', 'evento')$$,
+  '42501', null, 'trainee não publica posts');
+select is_empty($$select * from public.access_grants$$,
+  'trainee não vê a lista de acessos');
+select is_empty($$update public.nucleos set nome = 'X' returning id$$,
+  'trainee não edita núcleos');
 
 -- -----------------------------------------------------------------------------
 -- Editor
@@ -252,6 +299,10 @@ select is_empty($$select * from storage.objects where bucket_id = 'documentos'$$
 set local request.jwt.claim.sub = 'a0000000-0000-0000-0000-000000000001';
 select results_eq($$select count(*)::int from storage.objects where bucket_id = 'documentos'$$, array[1],
   'presidente vê documentos internos');
+
+set local request.jwt.claim.sub = 'a0000000-0000-0000-0000-000000000007';
+select results_eq($$select count(*)::int from storage.objects where bucket_id = 'documentos'$$, array[1],
+  'trainee baixa documentos internos');
 
 set local request.jwt.claim.sub = 'a0000000-0000-0000-0000-000000000003';
 select throws_ok($$insert into storage.objects (bucket_id, name) values ('fotos', 'membros/x.webp')$$,

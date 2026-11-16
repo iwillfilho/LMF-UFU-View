@@ -38,6 +38,9 @@ The approved implementation plan (routes, Supabase schema, RLS roles, phases) is
 - Dashboard setup is still pending (see "Hosted Supabase").
 
 Role permissions and the login flow are specified in `~/.claude/plans/quero-saber-o-que-transient-kay.md`. Only `editor`/`presidente`/`diretor_rh` publish. Members read only their own `hr_records`. Only `presidente`/`diretor_rh` edit fixed content.
+- `trainee` role (migrations `papel_trainee` + `permissoes_trainee`): sees Calendário, Documentos (and the Drive link) and Meus pontos, like `membro`, but not Ferramenta. RLS difference: `member_private` is readable by `private.is_efetivo()` (every role except trainee) or for the caller's own row, so trainees never see other people's contacts. In code, `EFETIVOS` = every role except trainee, and `TODOS` = `EFETIVOS` + trainee.
+- A trainee is a `members` row with `status 'ativo'`, `gestao_trainee` set and no `member_terms`. `lib/equipe.ts` only lists members with a current-gestão term, so trainees stay off `/equipe`, and the Membros tab labels them "Trainee" (`MembroAdmin.trainee`). Promotion: change the grant to `membro` in Acessos and add a cargo in Membros.
+- The 2026-11 member/alumni/trainee import was a one-off script outside the repo (`../importacao/importar.py`, spreadsheets in `../dados/`). Personal data (CPF, matrícula, birth date) was never imported. Never move spreadsheets or the Google OAuth `client_secret*.json` into the repo; `.gitignore` blocks `*.xlsx`, `*.csv` and `client_secret*.json`.
 
 The site is deployed at https://lmf-ufu.vercel.app (Vercel project `will-wesley/lmf-ufu`). The project is connected to `iwillfilho/LMF-UFU-View` through Git integration, so a push to `main` deploys to production. `vercel deploy --prod` is still available for manual deploys.
 
@@ -96,7 +99,7 @@ There are no tests inside this repo besides the pgTAP ones. A separate QA suite 
   - `members` is public; contact info and the login link live in `member_private`.
   - `site_settings` is public; `restricted_settings` (Drive URL) is members-only.
 - `seed.sql` is local-only. The repo is public, so never put real e-mails or the Drive URL in it. The seed's admin e-mails are placeholders: `presidente@lmf.com`, `diretor.rh@lmf.com`.
-- Any permission change must come with a test in `supabase/tests/permissoes.test.sql`. Keep `select plan(N)` equal to the number of assertions (66 now).
+- Any permission change must come with a test in `supabase/tests/permissoes.test.sql`. Keep `select plan(N)` equal to the number of assertions (78 now).
 - `calendars` (Google Calendar IDs shown in the Calendário tab) is members-read and admin-write. The seed has one public example (Brazilian holidays); production starts empty.
 
 ## Next.js 16 specifics (read node_modules/next/dist/docs before using unfamiliar APIs)
